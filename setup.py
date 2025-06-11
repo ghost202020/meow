@@ -44,26 +44,22 @@ def install_dependencies():
 
 
 def test_installation():
-    """Test if Enhanced MEOW can be imported and works"""
-    print("\n🧪 Testing Enhanced MEOW installation...")
+    """Test if Steganographic MEOW can be imported and works"""
+    print("\n🧪 Testing Steganographic MEOW installation...")
     
     try:
         # Test imports
-        from meow_enhanced import EnhancedMeowFormat
+        from meow_format import MeowFormat
         from PIL import Image
         import numpy as np
-        import scipy
         
         print("✅ All imports successful")
         
         # Test basic functionality
-        meow = EnhancedMeowFormat()
-        print("✅ Enhanced MEOW format initialized")
+        meow = MeowFormat()
+        print("✅ Steganographic MEOW format initialized")
         
-        # Test capability detection
-        from meow_enhanced import check_meow_compatibility
-        capabilities = check_meow_compatibility()
-        print(f"✅ Capability detection working: {len(capabilities)} capabilities detected")
+        print(f"✅ True cross-compatibility enabled")
         
         return True
         

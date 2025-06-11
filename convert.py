@@ -1,15 +1,15 @@
 """
-MEOW Converter - Convert any image to AI-optimized Enhanced MEOW
+MEOW Converter - Convert any image to AI-optimized Steganographic MEOW
 Usage: python convert.py input_image.jpg [output.meow]
 """
 
 import sys
 import os
-from meow_format import EnhancedMeowFormat
+from meow_format import MeowFormat
 
 
 def convert_image(input_path, output_path=None):
-    """Convert image to Enhanced MEOW with AI optimizations"""
+    """Convert image to Steganographic MEOW with AI optimizations"""
     
     if not os.path.exists(input_path):
         print(f"❌ Error: Input file '{input_path}' not found")
@@ -19,7 +19,7 @@ def convert_image(input_path, output_path=None):
         base_name = os.path.splitext(input_path)[0]
         output_path = f"{base_name}.meow"
     
-    print(f"🔄 Converting '{input_path}' to Enhanced MEOW...")
+    print(f"🔄 Converting '{input_path}' to Steganographic MEOW...")
     print(f"📁 Input: {input_path}")
     print(f"💾 Output: {output_path}")
     
@@ -27,19 +27,18 @@ def convert_image(input_path, output_path=None):
     input_size = os.path.getsize(input_path)
     print(f"📊 Input size: {input_size:,} bytes")
     
-    # Create Enhanced MEOW with sample AI annotations
-    meow = EnhancedMeowFormat()
+    # Create Steganographic MEOW with sample AI annotations
+    meow = MeowFormat()
     
     # Generate sample AI annotations based on filename/content
     ai_annotations = generate_smart_annotations(input_path)
     
     print(f"🤖 AI features: {len(ai_annotations.get('object_classes', []))} object classes")
     
-    # Convert
-    success = meow.create_from_image(
+    # Convert using steganographic method
+    success = meow.create_steganographic_meow(
         input_path, 
         output_path,
-        include_fallback=True,
         ai_annotations=ai_annotations
     )
     

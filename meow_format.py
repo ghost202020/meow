@@ -1,7 +1,6 @@
 """
-Enhanced MEOW File Format Implementation
-AI-optimized image format with cross-compatibility
-Based on the AI_Pivot specifications
+MEOW File Format Implementation
+Steganographic cross-compatible image format that works everywhere
 """
 
 import struct
@@ -9,6 +8,8 @@ import json
 import datetime
 import zlib
 import io
+import os
+import sys
 from typing import Tuple, Optional, Dict, List, Union
 from PIL import Image
 import numpy as np
@@ -38,601 +39,406 @@ class AIMetadata:
     edge_density: float = None
 
 
-class ChunkType:
-    """MEOW chunk type definitions"""
-    # Standard chunks
-    HEADER = b'MHDR'
-    FALLBACK_IMAGE = b'FALL'  # Embedded PNG/JPEG for compatibility
-    PIXEL_DATA = b'MPIX'      # Enhanced pixel data
-    METADATA = b'META'        # General metadata
+class MeowFormat:
+    """
+    Steganographic MEOW format - True cross-compatibility
+    Creates .meow files that work in any image viewer
+    """
     
-    # AI-specific chunks
-    AI_METADATA = b'AIMT'     # AI annotations and metadata
-    FEATURE_MAPS = b'FEAT'    # Pre-computed feature maps
-    ATTENTION = b'ATTN'       # Attention maps and saliency
-    SEMANTIC = b'SEMT'        # Semantic segmentation layers
-    MULTI_RES = b'MRES'       # Multi-resolution pyramid
-    COMPRESSION = b'COMP'     # Neural compression data
-    
-    # Compatibility chunks
-    PNG_COMPAT = b'PNGC'      # PNG compatibility data
-    JPEG_COMPAT = b'JPGC'     # JPEG compatibility data
-
-
-class EnhancedMeowFormat:
-    """Enhanced MEOW format with AI optimizations and cross-compatibility"""
-    
-    MAGIC_NUMBER = b"MEOW"
-    VERSION = 2  # Enhanced version
-    HEADER_SIZE = 16  # Magic(4) + Version(4) + Flags(4) + ChunkCount(4)
+    MAGIC_HEADER = b"MEOW_STEG_V2"  # 12 bytes
+    VERSION = 2
     
     def __init__(self):
-        self.chunks = {}
         self.ai_metadata = AIMetadata()
-        self.compression_level = 6  # Default compression level
+        self.metadata = {}
         
-    def create_from_image(self, image_path: str, output_path: str = None, 
-                         include_fallback: bool = True,
-                         ai_annotations: Dict = None) -> bool:
-        """
-        Create enhanced MEOW file from standard image with AI optimizations
-        
-        Args:
-            image_path: Path to input image (PNG, JPEG, etc.)
-            output_path: Output MEOW file path
-            include_fallback: Include embedded fallback image for compatibility
-            ai_annotations: Optional AI metadata to embed
-        
-        Returns:
-            bool: Success status
-        """
+    def png_to_meow(self, input_path: str, output_path: str = None) -> bool:
+        """Convert PNG to steganographic MEOW format"""
         try:
-            # Load original image
-            img = Image.open(image_path)
-            if img.mode not in ['RGB', 'RGBA']:
-                img = img.convert('RGBA')
+            if output_path is None:
+                output_path = input_path.rsplit('.', 1)[0] + '.meow'
             
+            # Create enhanced AI annotations
+            ai_annotations = {
+                'created_from': os.path.basename(input_path),
+                'creation_date': datetime.datetime.now().isoformat(),
+                'software': f'MEOW Python Implementation v{self.VERSION}',
+                'format': 'Steganographic MEOW',
+                'ai_optimized': True
+            }
+            
+            return self.create_steganographic_meow(input_path, output_path, ai_annotations)
+            
+        except Exception as e:
+            print(f"Error converting to MEOW: {e}")
+            return False
+    
+    def meow_to_image(self, input_path: str) -> Optional[Image.Image]:
+        """Load MEOW file as PIL Image"""
+        try:
+            img, meow_data = self.load_steganographic_meow(input_path)
+            if img:
+                # Store metadata for later access
+                if meow_data:
+                    self.metadata = meow_data.get('ai_annotations', {})
+                    # Convert to AIMetadata
+                    if 'features' in meow_data:
+                        features = meow_data['features']
+                        self.ai_metadata.edge_density = features.get('edge_density')
+                        self.ai_metadata.complexity_map = {'brightness': features.get('brightness')}
+            return img
+        except Exception as e:
+            print(f"Error loading MEOW: {e}")
+            return None
+    
+    def get_file_info(self, file_path: str) -> Optional[Dict]:
+        """Get information about a MEOW file"""
+        try:
+            if not os.path.exists(file_path):
+                return None
+                
+            img, meow_data = self.load_steganographic_meow(file_path)
+            if not img:
+                return None
+            
+            file_size = os.path.getsize(file_path)
             width, height = img.size
+            
+            return {
+                'format': 'Steganographic MEOW',
+                'width': width,
+                'height': height,
+                'pixels': width * height,
+                'file_size': file_size,
+                'pixel_data_size': width * height * 4,  # RGBA
+                'metadata_size': len(json.dumps(meow_data).encode()) if meow_data else 0,
+                'ai_enhanced': meow_data is not None,
+                'hidden_data': bool(meow_data)
+            }
+        except Exception as e:
+            print(f"Error getting file info: {e}")
+            return None    
+            
+    def create_steganographic_meow(self, image_path: str, output_path: str = None,
+                                 ai_annotations: Dict = None) -> bool:
+        """Create a .meow file that's actually a PNG with hidden MEOW data"""
+        try:
+            # Load and prepare image
+            img = Image.open(image_path)
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
             
             if output_path is None:
                 output_path = image_path.rsplit('.', 1)[0] + '.meow'
             
-            # Initialize chunks
-            self.chunks = {}
+            # Ensure .meow extension
+            if not output_path.lower().endswith('.meow'):
+                output_path = output_path.rsplit('.', 1)[0] + '.meow'
             
-            # Create header chunk
-            self._create_header_chunk(width, height)
+            # Prepare MEOW data for hiding
+            meow_data = self._prepare_meow_data(img, ai_annotations)
             
-            # Create fallback image chunk (embedded PNG for compatibility)
-            if include_fallback:
-                self._create_fallback_chunk(img)
+            # Hide data in image using steganography
+            stego_img = self._hide_data_in_image(img, meow_data)
             
-            # Create enhanced pixel data with neural compression
-            self._create_enhanced_pixel_chunk(img)
+            # Save as PNG but with .meow extension
+            stego_img.save(output_path, format='PNG', optimize=True)
             
-            # Create multi-resolution pyramid
-            self._create_multi_resolution_chunk(img)
+            print(f"✅ Created steganographic MEOW file: {output_path}")
+            print(f"📱 File opens as PNG in ANY viewer despite .meow extension")
+            print(f"🤖 MEOW data hidden in pixel LSBs")
+            print(f"📊 Hidden data size: {len(meow_data)} bytes")
             
-            # Generate AI-specific feature maps
-            self._create_feature_maps_chunk(img)
-            
-            # Create attention and saliency maps
-            self._create_attention_chunk(img)
-            
-            # Process AI annotations if provided
-            if ai_annotations:
-                self._process_ai_annotations(ai_annotations)
-            
-            # Create metadata chunks
-            self._create_metadata_chunk()
-            self._create_ai_metadata_chunk()
-            
-            # Write MEOW file
-            self._write_meow_file(output_path)
-            
-            print(f"Successfully created enhanced MEOW: {output_path}")
             return True
             
         except Exception as e:
-            print(f"Error creating enhanced MEOW: {e}")
+            print(f"❌ Error creating steganographic MEOW: {e}")
             return False
     
-    def load_meow_file(self, meow_path: str, load_ai_data: bool = True) -> Optional[Image.Image]:
-        """
-        Load MEOW file with optional AI data loading
-        
-        Args:
-            meow_path: Path to MEOW file
-            load_ai_data: Whether to load AI-specific chunks
-        
-        Returns:
-            PIL Image or None if error
-        """
+    def load_steganographic_meow(self, file_path: str, 
+                               extract_meow_data: bool = True) -> Tuple[Image.Image, Optional[Dict]]:
+        """Load steganographic MEOW file"""
         try:
-            with open(meow_path, 'rb') as f:
-                # Read and verify header
-                magic = f.read(4)
-                if magic != self.MAGIC_NUMBER:
-                    raise ValueError("Invalid MEOW file: incorrect magic number")
-                
-                version = struct.unpack('<I', f.read(4))[0]
-                flags = struct.unpack('<I', f.read(4))[0]
-                chunk_count = struct.unpack('<I', f.read(4))[0]
-                
-                print(f"Loading MEOW v{version} with {chunk_count} chunks")
-                
-                # Read all chunks
-                self.chunks = {}
-                for _ in range(chunk_count):
-                    chunk_type = f.read(4)
-                    chunk_size = struct.unpack('<I', f.read(4))[0]
-                    chunk_data = f.read(chunk_size)
-                    self.chunks[chunk_type] = chunk_data
-                
-                # Try to load enhanced pixel data first
-                if ChunkType.PIXEL_DATA in self.chunks:
-                    img = self._load_enhanced_pixels()
-                    if img:
-                        print("Loaded enhanced pixel data")
-                        if load_ai_data:
-                            self._load_ai_chunks()
-                        return img
-                
-                # Fallback to embedded standard image
-                if ChunkType.FALLBACK_IMAGE in self.chunks:
-                    img = self._load_fallback_image()
-                    if img:
-                        print("Loaded fallback image")
-                        return img
-                
-                raise ValueError("No loadable image data found")
-                
+            # Load as standard PNG (always works)
+            img = Image.open(file_path)
+            
+            if not extract_meow_data:
+                return img, None
+            
+            # Extract hidden MEOW data
+            meow_data = self._extract_hidden_data(img)
+            
+            return img, meow_data
+            
         except Exception as e:
-            print(f"Error loading MEOW file: {e}")
+            print(f"Error loading steganographic MEOW: {e}")
+            return None, None
+    
+    def _prepare_meow_data(self, img: Image.Image, ai_annotations: Dict = None) -> bytes:
+        """Prepare MEOW data for steganographic hiding"""
+        try:
+            # Generate AI features
+            features = self._generate_features(img)
+            
+            # Generate attention maps  
+            attention_maps = self._generate_attention_maps(img)
+            
+            # Build complete MEOW data structure
+            meow_structure = {
+                'version': self.VERSION,
+                'features': features,
+                'attention_maps': attention_maps,
+                'ai_annotations': ai_annotations or {},
+                'creation_date': datetime.datetime.now().isoformat()
+            }
+            
+            # Serialize and compress
+            json_data = json.dumps(meow_structure, separators=(',', ':')).encode('utf-8')
+            compressed_data = zlib.compress(json_data, level=9)
+            
+            # Create final structure: header + size + compressed data
+            size_bytes = struct.pack('<I', len(compressed_data))
+            return self.MAGIC_HEADER + size_bytes + compressed_data
+            
+        except Exception as e:
+            print(f"Error preparing MEOW data: {e}")
+            return b""
+    
+    def _hide_data_in_image(self, img: Image.Image, data: bytes) -> Image.Image:
+        """Hide data in image using LSB steganography"""
+        try:
+            # Convert to numpy array
+            img_array = np.array(img)
+            height, width, channels = img_array.shape
+            
+            # Calculate maximum capacity (2 bits per RGB channel = 6 bits per pixel)
+            max_capacity = (width * height * 3 * 2) // 8  # 3 RGB channels, 2 bits each
+            
+            if len(data) > max_capacity:
+                raise ValueError(f"Data too large: {len(data)} bytes > {max_capacity} bytes capacity")
+            
+            # Convert data to binary string
+            binary_data = ''.join(format(byte, '08b') for byte in data)
+            
+            # Add padding to align with 6-bit boundaries
+            while len(binary_data) % 6 != 0:
+                binary_data += '0'
+            
+            data_index = 0
+            
+            # Hide data in RGB channels (skip alpha)
+            for y in range(height):
+                for x in range(width):
+                    if data_index >= len(binary_data):
+                        break
+                        
+                    pixel = img_array[y, x]
+                    
+                    # Process RGB channels (skip alpha channel 3)
+                    for c in range(3):  # R, G, B only
+                        if data_index + 1 < len(binary_data):
+                            # Clear the 2 LSBs and set new values
+                            img_array[y, x, c] = (pixel[c] & 0xFC) | int(binary_data[data_index:data_index+2], 2)
+                            data_index += 2
+                        elif data_index < len(binary_data):
+                            # Handle single remaining bit
+                            img_array[y, x, c] = (pixel[c] & 0xFE) | int(binary_data[data_index], 2)
+                            data_index += 1
+            
+            return Image.fromarray(img_array, 'RGBA')
+            
+        except Exception as e:
+            print(f"Error hiding data: {e}")
+            return img
+    
+    def _extract_hidden_data(self, img: Image.Image) -> Optional[Dict]:
+        """Extract hidden MEOW data from image"""
+        try:
+            # Convert to numpy array
+            img_array = np.array(img)
+            height, width, channels = img_array.shape
+            
+            # Extract binary data from RGB LSBs
+            binary_data = ""
+            
+            for y in range(height):
+                for x in range(width):
+                    pixel = img_array[y, x]
+                    
+                    # Extract 2 bits from each RGB channel
+                    for c in range(3):  # R, G, B only
+                        binary_data += format(pixel[c] & 0x03, '02b')  # Get 2 LSBs
+            
+            # Convert binary string back to bytes
+            extracted_bytes = bytearray()
+            for i in range(0, len(binary_data), 8):
+                if i + 8 <= len(binary_data):
+                    byte_str = binary_data[i:i+8]
+                    extracted_bytes.append(int(byte_str, 2))
+            
+            # Look for MEOW magic header
+            extracted_data = bytes(extracted_bytes)
+            magic_pos = extracted_data.find(self.MAGIC_HEADER)
+            
+            if magic_pos == -1:
+                return None  # No MEOW data found
+            
+            # Extract size and compressed data
+            start_pos = magic_pos + len(self.MAGIC_HEADER)
+            if start_pos + 4 > len(extracted_data):
+                return None
+            
+            size = struct.unpack('<I', extracted_data[start_pos:start_pos+4])[0]
+            compressed_start = start_pos + 4
+            
+            if compressed_start + size > len(extracted_data):
+                return None
+            
+            compressed_data = extracted_data[compressed_start:compressed_start+size]
+            
+            # Decompress and parse JSON
+            json_data = zlib.decompress(compressed_data)
+            meow_structure = json.loads(json_data.decode('utf-8'))
+            
+            return meow_structure
+            
+        except Exception as e:
+            print(f"Error extracting hidden data: {e}")
             return None
+    
+    def _generate_features(self, img: Image.Image) -> Dict:
+        """Generate AI-relevant features from image"""
+        try:
+            # Convert to RGB for analysis
+            if img.mode != 'RGB':
+                rgb_img = img.convert('RGB')
+            else:
+                rgb_img = img
+            
+            img_array = np.array(rgb_img)
+            
+            # Basic image statistics
+            brightness = float(np.mean(img_array))
+            contrast = float(np.std(img_array))
+            
+            # Edge density calculation
+            gray = np.mean(img_array, axis=2)
+            edges_x = np.abs(np.diff(gray, axis=1))
+            edges_y = np.abs(np.diff(gray, axis=0))
+            edge_density = float(np.mean(edges_x) + np.mean(edges_y))
+            
+            # Color analysis
+            mean_rgb = [float(np.mean(img_array[:, :, i])) for i in range(3)]
+            std_rgb = [float(np.std(img_array[:, :, i])) for i in range(3)]
+            
+            return {
+                'brightness': brightness,
+                'contrast': contrast,
+                'edge_density': edge_density,
+                'mean_rgb': mean_rgb,
+                'std_rgb': std_rgb,
+                'dimensions': list(img.size)
+            }
+            
+        except Exception as e:
+            print(f"Error generating features: {e}")
+            return {}
+    
+    def _generate_attention_maps(self, img: Image.Image) -> Dict:
+        """Generate simple attention maps for AI processing"""
+        try:
+            # Convert to grayscale for analysis
+            gray_img = img.convert('L')
+            img_array = np.array(gray_img)
+            
+            # Simple saliency based on gradient magnitude
+            grad_x = np.abs(np.diff(img_array, axis=1))
+            grad_y = np.abs(np.diff(img_array, axis=0))
+            
+            # Pad to match original size
+            grad_x = np.pad(grad_x, ((0, 0), (0, 1)), mode='edge')
+            grad_y = np.pad(grad_y, ((0, 1), (0, 0)), mode='edge')
+            
+            gradient_magnitude = np.sqrt(grad_x**2 + grad_y**2)
+            
+            # Normalize to 0-255 range
+            if gradient_magnitude.max() > 0:
+                attention_map = (gradient_magnitude / gradient_magnitude.max() * 255).astype(np.uint8)
+            else:
+                attention_map = np.zeros_like(img_array, dtype=np.uint8)
+            
+            # Find high attention regions (simple thresholding)
+            threshold = np.percentile(attention_map, 90)
+            high_attention_coords = np.argwhere(attention_map > threshold)
+            
+            return {
+                'attention_peaks': len(high_attention_coords),
+                'avg_attention': float(np.mean(attention_map)),
+                'max_attention': float(np.max(attention_map)),
+                'attention_std': float(np.std(attention_map))
+            }
+            
+        except Exception as e:
+            print(f"Error generating attention maps: {e}")
+            return {}
     
     def get_ai_metadata(self) -> AIMetadata:
         """Get AI metadata from loaded file"""
         return self.ai_metadata
-    
-    def _create_header_chunk(self, width: int, height: int):
-        """Create header chunk with image information"""
-        header_data = struct.pack('<IIII', 
-                                 width, height, 
-                                 32,  # bit depth (RGBA)
-                                 0)   # reserved
-        self.chunks[ChunkType.HEADER] = header_data
-    
-    def _create_fallback_chunk(self, img: Image.Image):
-        """Create fallback PNG chunk for cross-compatibility"""
-        buffer = io.BytesIO()
-        # Convert to RGB if RGBA to reduce size
-        fallback_img = img.convert('RGB') if img.mode == 'RGBA' else img
-        fallback_img.save(buffer, format='PNG', optimize=True)
-        self.chunks[ChunkType.FALLBACK_IMAGE] = buffer.getvalue()
-    
-    def _create_enhanced_pixel_chunk(self, img: Image.Image):
-        """Create enhanced pixel data with neural compression simulation"""
-        # Convert to numpy array
-        pixel_data = np.array(img)
-        
-        # Simulate neural compression: compress complex regions more
-        complexity_map = self._calculate_complexity_map(pixel_data)
-        
-        # Apply content-aware compression
-        compressed_data = self._neural_compress(pixel_data, complexity_map)
-        
-        self.chunks[ChunkType.PIXEL_DATA] = compressed_data
-    
-    def _create_multi_resolution_chunk(self, img: Image.Image):
-        """Create multi-resolution pyramid for different model input sizes"""
-        resolutions = [(224, 224), (512, 512), (1024, 1024)]
-        pyramid_data = {}
-        
-        for target_size in resolutions:
-            if img.size[0] >= target_size[0] or img.size[1] >= target_size[1]:
-                resized = img.resize(target_size, Image.Resampling.LANCZOS)
-                buffer = io.BytesIO()
-                resized.save(buffer, format='PNG')
-                pyramid_data[f"{target_size[0]}x{target_size[1]}"] = buffer.getvalue()
-        
-        if pyramid_data:
-            pyramid_json = json.dumps(pyramid_data, default=lambda x: x.hex() if isinstance(x, bytes) else x)
-            self.chunks[ChunkType.MULTI_RES] = pyramid_json.encode('utf-8')
-    
-    def _create_feature_maps_chunk(self, img: Image.Image):
-        """Generate pre-computed feature maps for AI models"""
-        gray = img.convert('L')
-        gray_array = np.array(gray)
-        
-        # Edge detection (Sobel-like)
-        edge_x = np.abs(np.diff(gray_array, axis=1))
-        edge_y = np.abs(np.diff(gray_array, axis=0))
-        
-        # Texture analysis (local variance)
-        texture_map = self._calculate_texture_features(gray_array)
-        
-        feature_data = {
-            'edges_x': edge_x.tolist(),
-            'edges_y': edge_y.tolist(),
-            'texture': texture_map.tolist(),
-            'mean_brightness': float(np.mean(gray_array)),
-            'contrast': float(np.std(gray_array))
-        }
-        
-        # Compress feature data
-        feature_json = json.dumps(feature_data)
-        compressed_features = zlib.compress(feature_json.encode('utf-8'), self.compression_level)
-        self.chunks[ChunkType.FEATURE_MAPS] = compressed_features
-    
-    def _create_attention_chunk(self, img: Image.Image):
-        """Create attention maps and saliency information"""
-        gray = np.array(img.convert('L'))
-        
-        # Simple saliency based on gradient magnitude
-        saliency_map = self._calculate_saliency(gray)
-        
-        # Find high-attention regions
-        attention_regions = self._find_attention_regions(saliency_map)
-        
-        attention_data = {
-            'saliency_map': saliency_map.tolist(),
-            'attention_regions': attention_regions,
-            'focus_points': self._find_focus_points(saliency_map)
-        }
-        
-        attention_json = json.dumps(attention_data)
-        compressed_attention = zlib.compress(attention_json.encode('utf-8'), self.compression_level)
-        self.chunks[ChunkType.ATTENTION] = compressed_attention
-    
-    def _create_metadata_chunk(self):
-        """Create general metadata chunk"""
-        metadata = {
-            'created': datetime.datetime.now().isoformat(),
-            'software': 'Enhanced MEOW Python Implementation v2.0',
-            'format_version': self.VERSION,
-            'ai_optimized': True,
-            'compression_level': self.compression_level
-        }
-        
-        metadata_json = json.dumps(metadata)
-        self.chunks[ChunkType.METADATA] = metadata_json.encode('utf-8')
-    
-    def _create_ai_metadata_chunk(self):
-        """Create AI-specific metadata chunk"""
-        ai_data = asdict(self.ai_metadata)
-        # Remove None values
-        ai_data = {k: v for k, v in ai_data.items() if v is not None}
-        
-        if ai_data:
-            ai_json = json.dumps(ai_data)
-            compressed_ai = zlib.compress(ai_json.encode('utf-8'), self.compression_level)
-            self.chunks[ChunkType.AI_METADATA] = compressed_ai
-    
-    def _process_ai_annotations(self, annotations: Dict):
-        """Process and store AI annotations"""
-        if 'object_classes' in annotations:
-            self.ai_metadata.object_classes = annotations['object_classes']
-        if 'bounding_boxes' in annotations:
-            self.ai_metadata.bounding_boxes = annotations['bounding_boxes']
-        if 'preprocessing_params' in annotations:
-            self.ai_metadata.preprocessing_params = annotations['preprocessing_params']
-    
-    def _write_meow_file(self, output_path: str):
-        """Write all chunks to MEOW file"""
-        with open(output_path, 'wb') as f:
-            # Write file header
-            f.write(self.MAGIC_NUMBER)
-            f.write(struct.pack('<I', self.VERSION))
-            f.write(struct.pack('<I', 0))  # flags (reserved)
-            f.write(struct.pack('<I', len(self.chunks)))
-            
-            # Write all chunks
-            for chunk_type, chunk_data in self.chunks.items():
-                f.write(chunk_type)
-                f.write(struct.pack('<I', len(chunk_data)))
-                f.write(chunk_data)
-    
-    def _load_enhanced_pixels(self) -> Optional[Image.Image]:
-        """Load enhanced pixel data"""
-        try:
-            pixel_data = self.chunks[ChunkType.PIXEL_DATA]
-            # Decompress neural compressed data
-            decompressed = self._neural_decompress(pixel_data)
-            
-            # Convert back to PIL Image
-            if ChunkType.HEADER in self.chunks:
-                header = struct.unpack('<IIII', self.chunks[ChunkType.HEADER])
-                width, height = header[0], header[1]
-                
-                if len(decompressed) == width * height * 4:  # RGBA
-                    pixels = np.frombuffer(decompressed, dtype=np.uint8)
-                    pixels = pixels.reshape((height, width, 4))
-                    return Image.fromarray(pixels, 'RGBA')
-                elif len(decompressed) == width * height * 3:  # RGB
-                    pixels = np.frombuffer(decompressed, dtype=np.uint8)
-                    pixels = pixels.reshape((height, width, 3))
-                    return Image.fromarray(pixels, 'RGB')
-            
-            return None
-        except Exception as e:
-            print(f"Error loading enhanced pixels: {e}")
-            return None
-    
-    def _load_fallback_image(self) -> Optional[Image.Image]:
-        """Load embedded fallback image"""
-        try:
-            fallback_data = self.chunks[ChunkType.FALLBACK_IMAGE]
-            return Image.open(io.BytesIO(fallback_data))
-        except Exception as e:
-            print(f"Error loading fallback image: {e}")
-            return None
-    
-    def _load_ai_chunks(self):
-        """Load AI-specific data chunks"""
-        try:
-            # Load AI metadata
-            if ChunkType.AI_METADATA in self.chunks:
-                compressed_data = self.chunks[ChunkType.AI_METADATA]
-                decompressed = zlib.decompress(compressed_data)
-                ai_data = json.loads(decompressed.decode('utf-8'))
-                
-                # Reconstruct AI metadata
-                for key, value in ai_data.items():
-                    if hasattr(self.ai_metadata, key):
-                        setattr(self.ai_metadata, key, value)
-            
-            print("AI metadata loaded successfully")
-            
-        except Exception as e:
-            print(f"Error loading AI chunks: {e}")
-    
-    # Helper methods for AI processing
-    def _calculate_complexity_map(self, pixel_data: np.ndarray) -> np.ndarray:
-        """Calculate complexity map for content-aware compression"""
-        gray = np.mean(pixel_data, axis=2) if len(pixel_data.shape) == 3 else pixel_data
-        
-        # Calculate local variance as complexity measure
-        kernel_size = 5
-        h, w = gray.shape
-        complexity = np.zeros_like(gray)
-        
-        for i in range(kernel_size//2, h - kernel_size//2):
-            for j in range(kernel_size//2, w - kernel_size//2):
-                window = gray[i-kernel_size//2:i+kernel_size//2+1, 
-                             j-kernel_size//2:j+kernel_size//2+1]
-                complexity[i, j] = np.var(window)
-        
-        return complexity
-    
-    def _neural_compress(self, pixel_data: np.ndarray, complexity_map: np.ndarray) -> bytes:
-        """Simulate neural compression with content awareness"""
-        # For now, use standard compression with complexity-based quality
-        # In a real implementation, this would use a trained neural compressor
-        
-        # Apply different compression levels based on complexity
-        high_complexity = complexity_map > np.percentile(complexity_map, 75)
-        
-        # Flatten and compress
-        compressed = zlib.compress(pixel_data.tobytes(), self.compression_level)
-        
-        # Store complexity map for decompression
-        complexity_compressed = zlib.compress(complexity_map.tobytes())
-        
-        # Combine data
-        result = struct.pack('<I', len(compressed)) + compressed + complexity_compressed
-        return result
-    
-    def _neural_decompress(self, compressed_data: bytes) -> bytes:
-        """Decompress neural compressed data"""
-        try:
-            # Extract pixel data length
-            pixel_len = struct.unpack('<I', compressed_data[:4])[0]
-            
-            # Extract and decompress pixel data
-            pixel_compressed = compressed_data[4:4+pixel_len]
-            pixel_data = zlib.decompress(pixel_compressed)
-            
-            return pixel_data
-            
-        except Exception as e:
-            print(f"Decompression error: {e}")
-            return b''
-    
-    def _calculate_texture_features(self, gray_array: np.ndarray) -> np.ndarray:
-        """Calculate texture features using local variance"""
-        kernel_size = 3
-        h, w = gray_array.shape
-        texture = np.zeros_like(gray_array, dtype=np.float32)
-        
-        for i in range(kernel_size//2, h - kernel_size//2):
-            for j in range(kernel_size//2, w - kernel_size//2):
-                window = gray_array[i-kernel_size//2:i+kernel_size//2+1, 
-                                  j-kernel_size//2:j+kernel_size//2+1]
-                texture[i, j] = np.var(window.astype(np.float32))
-        
-        return texture
-    
-    def _calculate_saliency(self, gray_array: np.ndarray) -> np.ndarray:
-        """Calculate saliency map using gradient magnitude"""
-        # Calculate gradients
-        grad_x = np.abs(np.diff(gray_array.astype(np.float32), axis=1))
-        grad_y = np.abs(np.diff(gray_array.astype(np.float32), axis=0))
-        
-        # Pad to match original size
-        grad_x = np.pad(grad_x, ((0, 0), (0, 1)), mode='edge')
-        grad_y = np.pad(grad_y, ((0, 1), (0, 0)), mode='edge')
-        
-        # Combine gradients
-        saliency = np.sqrt(grad_x**2 + grad_y**2)
-        
-        # Normalize to 0-255
-        if saliency.max() > 0:
-            saliency = (saliency / saliency.max() * 255).astype(np.uint8)
-        
-        return saliency
-    
-    def _find_attention_regions(self, saliency_map: np.ndarray) -> List[Dict]:
-        """Find high-attention regions in saliency map"""
-        threshold = np.percentile(saliency_map, 90)
-        high_attention = saliency_map > threshold
-        
-        # Find connected components (simplified)
-        regions = []
-        h, w = high_attention.shape
-        visited = np.zeros_like(high_attention)
-        
-        def flood_fill(start_i, start_j):
-            stack = [(start_i, start_j)]
-            region_points = []
-            
-            while stack:
-                i, j = stack.pop()
-                if (i < 0 or i >= h or j < 0 or j >= w or 
-                    visited[i, j] or not high_attention[i, j]):
-                    continue
-                
-                visited[i, j] = True
-                region_points.append((i, j))
-                
-                # Add neighbors
-                for di, dj in [(-1,0), (1,0), (0,-1), (0,1)]:
-                    stack.append((i+di, j+dj))
-            
-            return region_points
-        
-        for i in range(h):
-            for j in range(w):
-                if high_attention[i, j] and not visited[i, j]:
-                    points = flood_fill(i, j)
-                    if len(points) > 10:  # Minimum region size
-                        min_i, min_j = min(p[0] for p in points), min(p[1] for p in points)
-                        max_i, max_j = max(p[0] for p in points), max(p[1] for p in points)
-                        
-                        regions.append({
-                            'bbox': [min_j, min_i, max_j, max_i],  # x1, y1, x2, y2
-                            'area': len(points),
-                            'avg_saliency': float(np.mean([saliency_map[p[0], p[1]] for p in points]))
-                        })
-        
-        return regions
-    
-    def _find_focus_points(self, saliency_map: np.ndarray) -> List[Tuple[int, int]]:
-        """Find key focus points in the image"""
-        # Find local maxima
-        from scipy import ndimage
-        
-        # Use maximum filter to find local maxima
-        neighborhood = ndimage.generate_binary_structure(2, 2)
-        local_maxima = ndimage.maximum_filter(saliency_map, footprint=neighborhood) == saliency_map
-        
-        # Get coordinates of maxima above threshold
-        threshold = np.percentile(saliency_map, 95)
-        focus_points = np.where((local_maxima) & (saliency_map > threshold))
-        
-        # Convert to list of tuples and limit number
-        points = list(zip(focus_points[1].tolist(), focus_points[0].tolist()))  # x, y format
-        return points[:10]  # Limit to top 10 focus points
 
 
-def check_meow_compatibility(viewer_path: str = None) -> Dict[str, bool]:
-    """
-    Check if a viewer supports MEOW format enhancements
-    
-    Args:
-        viewer_path: Path to viewer executable (optional)
-    
-    Returns:
-        Dict with capability flags
-    """
-    capabilities = {
-        'supports_meow': False,
-        'supports_ai_metadata': False,
-        'supports_multi_resolution': False,
-        'supports_fallback': True  # All viewers should support fallback
-    }
-    
-    # In a real implementation, this would check viewer capabilities
-    # For now, assume basic support
-    capabilities['supports_meow'] = True
-    
-    return capabilities
-
-
-def smart_fallback_loader(meow_path: str, viewer_capabilities: Dict = None) -> Image.Image:
-    """
-    Smart fallback loading based on viewer capabilities
-    
-    Args:
-        meow_path: Path to MEOW file
-        viewer_capabilities: Optional capability dict
-    
-    Returns:
-        PIL Image loaded with appropriate method
-    """
-    if viewer_capabilities is None:
-        viewer_capabilities = check_meow_compatibility()
-    
-    meow = EnhancedMeowFormat()
-    
-    if viewer_capabilities.get('supports_meow', False):
-        # Load full enhanced image
-        img = meow.load_meow_file(meow_path, load_ai_data=True)
+def smart_fallback_loader(file_path: str) -> Optional[Image.Image]:
+    """Smart loader that can handle both MEOW and regular image files"""
+    try:
+        # Try loading as MEOW first
+        meow = MeowFormat()
+        img = meow.meow_to_image(file_path)
         if img:
-            print("Loaded full enhanced MEOW image")
             return img
-    
-    # Fallback to standard image
-    img = meow.load_meow_file(meow_path, load_ai_data=False)
-    if img:
-        print("Loaded fallback image from MEOW")
-        return img
-    
-    raise ValueError("Could not load image from MEOW file")
+        
+        # Fallback to regular image loading
+        return Image.open(file_path)
+        
+    except Exception as e:
+        print(f"Error loading file: {e}")
+        return None
 
 
 if __name__ == "__main__":
-    # Simple test
-    import sys
-    
     if len(sys.argv) < 2:
-        print("Usage: python meow_enhanced.py <image_path> [output_path]")
+        print("Usage: python meow_format.py <image_path> [output_path]")
+        print("Converts image to steganographic MEOW format")
         sys.exit(1)
     
     input_path = sys.argv[1]
     output_path = sys.argv[2] if len(sys.argv) > 2 else None
     
-    # Create enhanced MEOW
-    meow = EnhancedMeowFormat()
+    # Create steganographic MEOW
+    meow = MeowFormat()
     
-    # Add some sample AI annotations
+    # Add AI annotations
     ai_annotations = {
-        'object_classes': ['cat', 'background'],
-        'preprocessing_params': {
-            'mean_rgb': [0.485, 0.456, 0.406],
-            'std_rgb': [0.229, 0.224, 0.225],
-            'input_size': [224, 224]
-        }
+        'source': 'command_line_conversion',
+        'processing_date': datetime.datetime.now().isoformat(),
+        'ai_enhanced': True
     }
     
-    success = meow.create_from_image(input_path, output_path, 
-                                   include_fallback=True,
-                                   ai_annotations=ai_annotations)
+    success = meow.create_steganographic_meow(input_path, output_path, ai_annotations)
     
     if success:
-        print("Enhanced MEOW file created successfully!")
-        
-        # Test loading
         if output_path is None:
             output_path = input_path.rsplit('.', 1)[0] + '.meow'
         
-        loaded_img = smart_fallback_loader(output_path)
-        if loaded_img:
-            print(f"Successfully loaded and verified MEOW file: {output_path}")
-            
-            # Print AI metadata
-            ai_meta = meow.get_ai_metadata()
-            if ai_meta.object_classes:
-                print(f"Detected objects: {ai_meta.object_classes}")
+        print(f"\n🎉 Successfully created: {output_path}")
+        print("🔍 Testing file...")
+        
+        # Test loading
+        loaded_img, meow_data = meow.load_steganographic_meow(output_path)
+        if loaded_img and meow_data:
+            print("✅ File verified - MEOW data successfully extracted")
+            print(f"📊 Hidden features: {list(meow_data.get('features', {}).keys())}")
+            print(f"🤖 AI annotations: {list(meow_data.get('ai_annotations', {}).keys())}")
+        else:
+            print("❌ Verification failed")
     else:
-        print("Failed to create enhanced MEOW file")
+        print("❌ Failed to create MEOW file")

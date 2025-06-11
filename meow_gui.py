@@ -1,6 +1,6 @@
 """
-Enhanced MEOW GUI - AI-Optimized Image Viewer
-Showcases AI features and cross-compatibility
+Steganographic MEOW GUI - AI-Optimized Image Viewer
+Showcases AI features and true cross-compatibility
 """
 
 import tkinter as tk
@@ -9,20 +9,20 @@ import tkinter.font as tkFont
 from PIL import Image, ImageTk
 import os
 import json
-from meow_format import EnhancedMeowFormat, smart_fallback_loader, check_meow_compatibility
+from meow_format import MeowFormat, smart_fallback_loader
 
 
-class EnhancedMeowGUI:
+class MeowGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Enhanced MEOW Viewer - AI Optimized")
+        self.root.title("Steganographic MEOW Viewer - True Cross-Compatibility")
         self.root.geometry("1200x800")
         
         # Variables
         self.current_image = None
         self.current_meow = None
         self.ai_metadata = None
-        self.viewer_capabilities = check_meow_compatibility()
+        self.viewer_capabilities = {'supports_meow': True, 'universal_compatibility': True}
         
         # Setup GUI
         self.setup_menu()
@@ -41,7 +41,7 @@ class EnhancedMeowGUI:
         file_menu.add_command(label="Open Other Image...", command=self.open_image)
         file_menu.add_command(label="Open MEOW...", command=self.open_meow)
         file_menu.add_separator()
-        file_menu.add_command(label="Convert to Enhanced MEOW...", command=self.convert_to_meow)
+        file_menu.add_command(label="Convert to Steganographic MEOW...", command=self.convert_to_meow)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
         
@@ -260,18 +260,41 @@ class EnhancedMeowGUI:
             filetypes=[
                 ("MEOW files", "*.meow"),
                 ("All files", "*.*")
-            ]
-        )
+            ]        )
         
         if file_path:
             try:
                 # Use smart fallback loader
-                self.current_image = smart_fallback_loader(file_path, self.viewer_capabilities)
-                
-                # Load enhanced MEOW data
-                self.current_meow = EnhancedMeowFormat()
-                self.current_image = self.current_meow.load_meow_file(file_path, load_ai_data=True)
-                self.ai_metadata = self.current_meow.get_ai_metadata()
+                self.current_image = smart_fallback_loader(file_path)
+                  # Try to load MEOW data if it's a MEOW file
+                if file_path.lower().endswith('.meow'):
+                    self.current_meow = MeowFormat()
+                    img, meow_data = self.current_meow.load_steganographic_meow(file_path)
+                    if meow_data:
+                        # Store the extracted MEOW data for display
+                        self.extracted_meow_data = meow_data
+                        
+                        # Populate AI metadata from extracted data
+                        from meow_format import AIMetadata
+                        self.ai_metadata = AIMetadata()
+                        
+                        # Extract AI annotations if present
+                        if 'ai_annotations' in meow_data:
+                            annotations = meow_data['ai_annotations']
+                            if 'object_classes' in annotations:
+                                self.ai_metadata.object_classes = annotations['object_classes']
+                            if 'bounding_boxes' in annotations:
+                                self.ai_metadata.bounding_boxes = annotations['bounding_boxes']
+                            if 'preprocessing_params' in annotations:
+                                self.ai_metadata.preprocessing_params = annotations['preprocessing_params']
+                        
+                        # Extract features if present
+                        if 'features' in meow_data:
+                            features = meow_data['features']
+                            self.ai_metadata.edge_density = features.get('edge_density')
+                            self.ai_metadata.complexity_map = {'brightness': features.get('brightness')}
+                    else:
+                        self.extracted_meow_data = None
                 
                 self.display_image(self.current_image)
                 self.update_ai_display()
@@ -293,9 +316,8 @@ class EnhancedMeowGUI:
         )
         
         if output_path:
-            try:
-                # Create enhanced MEOW with sample AI annotations
-                meow = EnhancedMeowFormat()
+            try:                # Create enhanced MEOW with sample AI annotations
+                meow = MeowFormat()
                 
                 # Generate sample annotations based on image
                 ai_annotations = self.generate_sample_annotations()
@@ -304,23 +326,22 @@ class EnhancedMeowGUI:
                 temp_png = "temp_convert.png"
                 self.current_image.save(temp_png, "PNG")
                 
-                success = meow.create_from_image(temp_png, output_path, 
-                                               include_fallback=True,
-                                               ai_annotations=ai_annotations)
+                success = meow.create_steganographic_meow(temp_png, output_path, 
+                                                        ai_annotations=ai_annotations)
                 
                 # Clean up temp file
                 if os.path.exists(temp_png):
                     os.remove(temp_png)
                 
                 if success:
-                    messagebox.showinfo("Success", f"Enhanced MEOW saved: {output_path}")
+                    messagebox.showinfo("Success", f"Steganographic MEOW saved: {output_path}")
                     
                     # Reload to show AI features
                     self.current_meow = meow
                     self.ai_metadata = meow.get_ai_metadata()
                     self.update_ai_display()
                 else:
-                    messagebox.showerror("Error", "Failed to create Enhanced MEOW file")
+                    messagebox.showerror("Error", "Failed to create Steganographic MEOW file")
                     
             except Exception as e:
                 messagebox.showerror("Error", f"Conversion failed: {e}")
@@ -378,8 +399,7 @@ class EnhancedMeowGUI:
             # Clear canvas and display image
             self.image_canvas.delete("all")
             self.image_canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
-            
-            # Update scroll region
+              # Update scroll region
             self.image_canvas.configure(scrollregion=self.image_canvas.bbox("all"))
     
     def update_ai_display(self):
@@ -392,25 +412,37 @@ class EnhancedMeowGUI:
         self.chunks_tree.delete(*self.chunks_tree.get_children())
         self.size_text.delete(1.0, tk.END)
         
-        if not self.current_meow or not self.ai_metadata:
-            self.metadata_text.insert(tk.END, "No AI metadata available.\nLoad an Enhanced MEOW file to see AI features.")
+        # Check if we have steganographic MEOW data
+        if not hasattr(self, 'extracted_meow_data') or not self.extracted_meow_data:
+            self.metadata_text.insert(tk.END, "No AI metadata available.\nLoad a Steganographic MEOW file to see AI features.")
             self.features_var.set("No features available")
             return
         
-        # Update metadata
-        metadata_info = f"AI Metadata Overview\n{'='*20}\n"
-        if self.ai_metadata.object_classes:
-            metadata_info += f"Object Classes: {', '.join(self.ai_metadata.object_classes)}\n"
-        if self.ai_metadata.preprocessing_params:
-            metadata_info += f"Preprocessing: Available\n"
-        if hasattr(self.current_meow, 'chunks'):
-            metadata_info += f"Total Chunks: {len(self.current_meow.chunks)}\n"
+        meow_data = self.extracted_meow_data
         
+        # Update metadata
+        metadata_info = f"Steganographic MEOW Data\n{'='*25}\n"
+        metadata_info += f"Format Version: {meow_data.get('version', 'Unknown')}\n"
+        metadata_info += f"Creation Date: {meow_data.get('creation_date', 'Unknown')}\n"
+        
+        if 'ai_annotations' in meow_data:
+            annotations = meow_data['ai_annotations']
+            if 'object_classes' in annotations:
+                metadata_info += f"Object Classes: {', '.join(annotations['object_classes'])}\n"
+            if 'source' in annotations:
+                metadata_info += f"Source: {annotations['source']}\n"
+            if 'ai_enhanced' in annotations:
+                metadata_info += f"AI Enhanced: {annotations['ai_enhanced']}\n"
+        
+        if 'features' in meow_data:
+            features = meow_data['features']
+            metadata_info += f"Features Available: {len(features)} types\n"
+            
         self.metadata_text.insert(tk.END, metadata_info)
         
-        # Update objects
-        if self.ai_metadata.bounding_boxes:
-            for i, bbox_info in enumerate(self.ai_metadata.bounding_boxes):
+        # Update objects (from AI annotations)
+        if 'ai_annotations' in meow_data and 'bounding_boxes' in meow_data['ai_annotations']:
+            for i, bbox_info in enumerate(meow_data['ai_annotations']['bounding_boxes']):
                 obj_class = bbox_info.get('class', 'Unknown')
                 confidence = bbox_info.get('confidence', 0.0)
                 bbox = bbox_info.get('bbox', [])
@@ -421,54 +453,41 @@ class EnhancedMeowGUI:
         
         # Update features
         features_list = []
-        if hasattr(self.current_meow, 'chunks'):
-            for chunk_type in self.current_meow.chunks.keys():
-                chunk_name = chunk_type.decode('utf-8', errors='ignore')
-                if chunk_name in ['FEAT', 'ATTN', 'MRES', 'SEMT']:
-                    features_list.append(chunk_name)
+        if 'features' in meow_data:
+            features_list = list(meow_data['features'].keys())
         
         self.features_var.set(f"Available: {', '.join(features_list) if features_list else 'None'}")
         
         # Update preprocessing parameters
-        if self.ai_metadata.preprocessing_params:
-            preprocessing_info = json.dumps(self.ai_metadata.preprocessing_params, indent=2)
+        if 'ai_annotations' in meow_data and 'preprocessing_params' in meow_data['ai_annotations']:
+            preprocessing_info = json.dumps(meow_data['ai_annotations']['preprocessing_params'], indent=2)
             self.preprocessing_text.insert(tk.END, preprocessing_info)
         
-        # Update chunks information
-        if hasattr(self.current_meow, 'chunks'):
-            chunk_descriptions = {
-                'MHDR': 'Image header information',
-                'FALL': 'Fallback PNG for compatibility',
-                'MPIX': 'Enhanced pixel data with neural compression',
-                'META': 'General metadata',
-                'AIMT': 'AI-specific metadata and annotations',
-                'FEAT': 'Pre-computed feature maps',
-                'ATTN': 'Attention maps and saliency',
-                'MRES': 'Multi-resolution pyramid',
-                'SEMT': 'Semantic segmentation layers',
-                'COMP': 'Neural compression data'
-            }
-            
-            for chunk_type, chunk_data in self.current_meow.chunks.items():
-                chunk_name = chunk_type.decode('utf-8', errors='ignore')
-                size = len(chunk_data)
-                description = chunk_descriptions.get(chunk_name, 'Unknown chunk type')
-                
-                self.chunks_tree.insert('', tk.END, text=chunk_name,
-                                      values=(f"{size:,}", description))
+        # Update attention data
+        if 'attention_maps' in meow_data:
+            attention_data = meow_data['attention_maps']
+            for key, value in attention_data.items():
+                if isinstance(value, (int, float)):
+                    self.attention_tree.insert('', tk.END, text=key,
+                                             values=("N/A", f"{value:.3f}"))
+          # Update steganographic information instead of chunks
+        stego_info = "Steganographic Storage\n" + "="*25 + "\n\n"
         
-        # Update size analysis
-        if hasattr(self.current_meow, 'chunks'):
-            total_size = sum(len(data) for data in self.current_meow.chunks.values())
-            fallback_size = len(self.current_meow.chunks.get(b'FALL', b''))
-            ai_size = total_size - fallback_size
-            
-            size_info = f"Total MEOW Size: {total_size:,} bytes\n"
-            size_info += f"Fallback Image: {fallback_size:,} bytes ({fallback_size/total_size*100:.1f}%)\n"
-            size_info += f"AI Enhancements: {ai_size:,} bytes ({ai_size/total_size*100:.1f}%)\n"
-            size_info += f"Overhead Ratio: {ai_size/fallback_size:.2f}x\n"
-            
-            self.size_text.insert(tk.END, size_info)
+        # Calculate hidden data size
+        hidden_data_size = len(json.dumps(meow_data).encode())
+        stego_info += f"Hidden Data Size: {hidden_data_size:,} bytes\n"
+        stego_info += f"Storage Method: LSB Steganography\n"
+        stego_info += f"Channels Used: RGB (2 bits each)\n"
+        stego_info += f"Capacity Used: {hidden_data_size} bytes\n"
+          # Add data breakdown
+        self.chunks_tree.insert('', tk.END, text="Features",
+                               values=(f"{len(str(meow_data.get('features', {})))} chars", "AI feature data"))
+        self.chunks_tree.insert('', tk.END, text="Attention",
+                               values=(f"{len(str(meow_data.get('attention_maps', {})))} chars", "Attention maps"))
+        self.chunks_tree.insert('', tk.END, text="Annotations",
+                               values=(f"{len(str(meow_data.get('ai_annotations', {})))} chars", "AI annotations"))
+        
+        self.size_text.insert(tk.END, stego_info)
     
     def on_object_select(self, event):
         """Handle object selection in treeview"""
@@ -579,7 +598,7 @@ def main():
     except:
         pass
     
-    app = EnhancedMeowGUI(root)
+    app = MeowGUI(root)
     
     # Handle window closing
     def on_closing():
