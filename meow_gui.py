@@ -1,31 +1,34 @@
 """
-MEOW GUI Application - Complete graphical interface for MEOW file operations
+Enhanced MEOW GUI - AI-Optimized Image Viewer
+Showcases AI features and cross-compatibility
 """
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-import os
-from pathlib import Path
-from meow_format import MeowFormat
+import tkinter.font as tkFont
 from PIL import Image, ImageTk
+import os
+import json
+from meow_format import EnhancedMeowFormat, smart_fallback_loader, check_meow_compatibility
 
 
-class MeowGUI:
-    """Complete GUI application for MEOW file format operations"""
-    
-    def __init__(self):
-        self.root = tk.Tk()
-        self.root.title("MEOW File Format Manager")
-        self.root.geometry("900x700")
-        self.root.minsize(600, 500)
+class EnhancedMeowGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Enhanced MEOW Viewer - AI Optimized")
+        self.root.geometry("1200x800")
         
-        self.meow = MeowFormat()
+        # Variables
         self.current_image = None
-        self.photo_image = None
-        self.zoom_level = 1.0
+        self.current_meow = None
+        self.ai_metadata = None
+        self.viewer_capabilities = check_meow_compatibility()
         
-        self.setup_ui()
+        # Setup GUI
         self.setup_menu()
+        self.setup_main_interface()
+        self.setup_ai_panel()
+        self.update_status()
     
     def setup_menu(self):
         """Setup menu bar"""
@@ -35,432 +38,558 @@ class MeowGUI:
         # File menu
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="Convert PNG to MEOW", command=self.convert_png_to_meow)
-        file_menu.add_command(label="Convert MEOW to PNG", command=self.convert_meow_to_png)
+        file_menu.add_command(label="Open Other Image...", command=self.open_image)
+        file_menu.add_command(label="Open MEOW...", command=self.open_meow)
         file_menu.add_separator()
-        file_menu.add_command(label="Open MEOW File", command=self.open_meow_file)
+        file_menu.add_command(label="Convert to Enhanced MEOW...", command=self.convert_to_meow)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
         
         # View menu
         view_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="View", menu=view_menu)
-        view_menu.add_command(label="Zoom In", command=self.zoom_in)
-        view_menu.add_command(label="Zoom Out", command=self.zoom_out)
-        view_menu.add_command(label="Reset Zoom", command=self.reset_zoom)
+        view_menu.add_command(label="Show AI Features", command=self.toggle_ai_panel)
+        view_menu.add_command(label="Viewer Capabilities", command=self.show_capabilities)
         
-        # Help menu
-        help_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About MEOW Format", command=self.show_about)
+        # AI menu
+        ai_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="AI", menu=ai_menu)
+        ai_menu.add_command(label="Export Features...", command=self.export_ai_features)
+        ai_menu.add_command(label="Import Annotations...", command=self.import_annotations)
     
-    def setup_ui(self):
-        """Setup the main user interface"""
-        # Create notebook for tabs
-        self.notebook = ttk.Notebook(self.root)
-        self.notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+    def setup_main_interface(self):
+        """Setup main interface"""
+        # Main frame
+        main_frame = ttk.Frame(self.root)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        # Tab 1: Converter
-        self.setup_converter_tab()
+        # Left panel for image
+        left_frame = ttk.Frame(main_frame)
+        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        # Tab 2: Viewer
-        self.setup_viewer_tab()
-        
-        # Tab 3: File Info
-        self.setup_info_tab()
-    
-    def setup_converter_tab(self):
-        """Setup the converter tab"""
-        converter_frame = ttk.Frame(self.notebook)
-        self.notebook.add(converter_frame, text="Converter")
-        
-        # Title
-        title_label = ttk.Label(converter_frame, text="MEOW File Converter", font=("Arial", 16, "bold"))
-        title_label.pack(pady=(20, 30))
-        
-        # PNG to MEOW section
-        png_frame = ttk.LabelFrame(converter_frame, text="Convert PNG to MEOW", padding=20)
-        png_frame.pack(fill=tk.X, padx=20, pady=(0, 20))
-        
-        self.png_input_var = tk.StringVar()
-        self.png_output_var = tk.StringVar()
-        
-        ttk.Label(png_frame, text="Input PNG file:").grid(row=0, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(png_frame, textvariable=self.png_input_var, width=50).grid(row=0, column=1, padx=(10, 5), pady=5)
-        ttk.Button(png_frame, text="Browse", command=self.browse_png_input).grid(row=0, column=2, padx=5, pady=5)
-        
-        ttk.Label(png_frame, text="Output MEOW file:").grid(row=1, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(png_frame, textvariable=self.png_output_var, width=50).grid(row=1, column=1, padx=(10, 5), pady=5)
-        ttk.Button(png_frame, text="Browse", command=self.browse_png_output).grid(row=1, column=2, padx=5, pady=5)
-        
-        ttk.Button(png_frame, text="Convert to MEOW", command=self.do_png_to_meow).grid(row=2, column=1, pady=20)
-        
-        # MEOW to PNG section
-        meow_frame = ttk.LabelFrame(converter_frame, text="Convert MEOW to PNG", padding=20)
-        meow_frame.pack(fill=tk.X, padx=20, pady=(0, 20))
-        
-        self.meow_input_var = tk.StringVar()
-        self.meow_output_var = tk.StringVar()
-        
-        ttk.Label(meow_frame, text="Input MEOW file:").grid(row=0, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(meow_frame, textvariable=self.meow_input_var, width=50).grid(row=0, column=1, padx=(10, 5), pady=5)
-        ttk.Button(meow_frame, text="Browse", command=self.browse_meow_input).grid(row=0, column=2, padx=5, pady=5)
-        
-        ttk.Label(meow_frame, text="Output PNG file:").grid(row=1, column=0, sticky=tk.W, pady=5)
-        ttk.Entry(meow_frame, textvariable=self.meow_output_var, width=50).grid(row=1, column=1, padx=(10, 5), pady=5)
-        ttk.Button(meow_frame, text="Browse", command=self.browse_meow_output).grid(row=1, column=2, padx=5, pady=5)
-        
-        ttk.Button(meow_frame, text="Convert to PNG", command=self.do_meow_to_png).grid(row=2, column=1, pady=20)
-        
-        # Status text
-        status_frame = ttk.LabelFrame(converter_frame, text="Status", padding=10)
-        status_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 20))
-        
-        self.status_text = tk.Text(status_frame, height=6, state=tk.DISABLED)
-        status_scrollbar = ttk.Scrollbar(status_frame, orient=tk.VERTICAL, command=self.status_text.yview)
-        self.status_text.configure(yscrollcommand=status_scrollbar.set)
-        
-        self.status_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        status_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-    
-    def setup_viewer_tab(self):
-        """Setup the viewer tab"""
-        viewer_frame = ttk.Frame(self.notebook)
-        self.notebook.add(viewer_frame, text="Viewer")
-        
-        # Controls frame
-        controls_frame = ttk.Frame(viewer_frame)
-        controls_frame.pack(fill=tk.X, padx=10, pady=10)
-        
-        ttk.Button(controls_frame, text="Open MEOW File", command=self.open_meow_file).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(controls_frame, text="Zoom In", command=self.zoom_in).pack(side=tk.LEFT, padx=5)
-        ttk.Button(controls_frame, text="Zoom Out", command=self.zoom_out).pack(side=tk.LEFT, padx=5)
-        ttk.Button(controls_frame, text="Reset Zoom", command=self.reset_zoom).pack(side=tk.LEFT, padx=5)
-        
-        self.zoom_label = ttk.Label(controls_frame, text="100%")
-        self.zoom_label.pack(side=tk.RIGHT, padx=(5, 0))
-        
-        # Image display area
-        image_frame = ttk.LabelFrame(viewer_frame, text="Image Preview", padding=10)
-        image_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
-        
-        # Canvas with scrollbars
-        canvas_frame = ttk.Frame(image_frame)
+        # Image canvas with scrollbars
+        canvas_frame = ttk.Frame(left_frame)
         canvas_frame.pack(fill=tk.BOTH, expand=True)
         
-        self.viewer_canvas = tk.Canvas(canvas_frame, bg='white')
-        v_scroll = ttk.Scrollbar(canvas_frame, orient=tk.VERTICAL, command=self.viewer_canvas.yview)
-        h_scroll = ttk.Scrollbar(canvas_frame, orient=tk.HORIZONTAL, command=self.viewer_canvas.xview)
+        self.image_canvas = tk.Canvas(canvas_frame, bg='white')
+        v_scrollbar = ttk.Scrollbar(canvas_frame, orient=tk.VERTICAL, command=self.image_canvas.yview)
+        h_scrollbar = ttk.Scrollbar(canvas_frame, orient=tk.HORIZONTAL, command=self.image_canvas.xview)
         
-        self.viewer_canvas.configure(yscrollcommand=v_scroll.set, xscrollcommand=h_scroll.set)
+        self.image_canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
         
-        self.viewer_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        v_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        h_scroll.pack(side=tk.BOTTOM, fill=tk.X)
+        self.image_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        h_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
         
-        # Show placeholder
-        self.show_viewer_placeholder()
+        # Status bar
+        self.status_var = tk.StringVar()
+        self.status_bar = ttk.Label(left_frame, textvariable=self.status_var, relief=tk.SUNKEN)
+        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+        
+        # Control buttons
+        button_frame = ttk.Frame(left_frame)
+        button_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=5)
+        
+        ttk.Button(button_frame, text="Open Other Image", command=self.open_image).pack(side=tk.LEFT, padx=2)
+        ttk.Button(button_frame, text="Open MEOW", command=self.open_meow).pack(side=tk.LEFT, padx=2)
+        ttk.Button(button_frame, text="Convert to MEOW", command=self.convert_to_meow).pack(side=tk.LEFT, padx=2)
+        
+        # Separator
+        separator = ttk.Separator(main_frame, orient=tk.VERTICAL)
+        separator.pack(side=tk.LEFT, fill=tk.Y, padx=5)
     
-    def setup_info_tab(self):
-        """Setup the file info tab"""
-        info_frame = ttk.Frame(self.notebook)
-        self.notebook.add(info_frame, text="File Info")
+    def setup_ai_panel(self):
+        """Setup AI features panel"""
+        # Right panel for AI features
+        self.ai_frame = ttk.Frame(self.root)
+        self.ai_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=5, pady=5)
         
-        # File selection
-        file_frame = ttk.Frame(info_frame)
-        file_frame.pack(fill=tk.X, padx=10, pady=10)
+        # AI Features label
+        ai_title = ttk.Label(self.ai_frame, text="AI Features", font=('Arial', 12, 'bold'))
+        ai_title.pack(pady=(0, 10))
         
-        ttk.Label(file_frame, text="MEOW File:").pack(side=tk.LEFT)
-        self.info_file_var = tk.StringVar()
-        ttk.Entry(file_frame, textvariable=self.info_file_var, width=50).pack(side=tk.LEFT, padx=(10, 5), fill=tk.X, expand=True)
-        ttk.Button(file_frame, text="Browse", command=self.browse_info_file).pack(side=tk.LEFT, padx=5)
-        ttk.Button(file_frame, text="Analyze", command=self.analyze_file).pack(side=tk.LEFT, padx=5)
+        # Notebook for tabbed AI info
+        self.ai_notebook = ttk.Notebook(self.ai_frame)
+        self.ai_notebook.pack(fill=tk.BOTH, expand=True)
         
-        # Info display
-        info_display_frame = ttk.LabelFrame(info_frame, text="File Information", padding=10)
-        info_display_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+        # Metadata tab
+        self.setup_metadata_tab()
         
-        self.info_text = tk.Text(info_display_frame, state=tk.DISABLED)
-        info_scroll = ttk.Scrollbar(info_display_frame, orient=tk.VERTICAL, command=self.info_text.yview)
-        self.info_text.configure(yscrollcommand=info_scroll.set)
+        # Objects tab
+        self.setup_objects_tab()
         
-        self.info_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        info_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        # Features tab
+        self.setup_features_tab()
+        
+        # Performance tab
+        self.setup_performance_tab()
     
-    # Converter methods
-    def browse_png_input(self):
+    def setup_metadata_tab(self):
+        """Setup metadata display tab"""
+        metadata_frame = ttk.Frame(self.ai_notebook)
+        self.ai_notebook.add(metadata_frame, text="Metadata")
+        
+        # Scrollable text widget for metadata
+        text_frame = ttk.Frame(metadata_frame)
+        text_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.metadata_text = tk.Text(text_frame, wrap=tk.WORD, width=40, height=20)
+        metadata_scroll = ttk.Scrollbar(text_frame, orient=tk.VERTICAL, command=self.metadata_text.yview)
+        self.metadata_text.configure(yscrollcommand=metadata_scroll.set)
+        
+        self.metadata_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        metadata_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+    
+    def setup_objects_tab(self):
+        """Setup object detection display tab"""
+        objects_frame = ttk.Frame(self.ai_notebook)
+        self.ai_notebook.add(objects_frame, text="Objects")
+        
+        # Objects treeview
+        self.objects_tree = ttk.Treeview(objects_frame, columns=('Class', 'Confidence', 'BBox'), show='tree headings')
+        self.objects_tree.heading('#0', text='ID')
+        self.objects_tree.heading('Class', text='Class')
+        self.objects_tree.heading('Confidence', text='Confidence')
+        self.objects_tree.heading('BBox', text='Bounding Box')
+        
+        self.objects_tree.column('#0', width=50)
+        self.objects_tree.column('Class', width=100)
+        self.objects_tree.column('Confidence', width=80)
+        self.objects_tree.column('BBox', width=120)
+        
+        objects_scroll = ttk.Scrollbar(objects_frame, orient=tk.VERTICAL, command=self.objects_tree.yview)
+        self.objects_tree.configure(yscrollcommand=objects_scroll.set)
+        
+        self.objects_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        objects_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Bind selection event
+        self.objects_tree.bind('<<TreeviewSelect>>', self.on_object_select)
+    
+    def setup_features_tab(self):
+        """Setup features display tab"""
+        features_frame = ttk.Frame(self.ai_notebook)
+        self.ai_notebook.add(features_frame, text="Features")
+        
+        # Feature maps info
+        feature_info = ttk.LabelFrame(features_frame, text="Available Features")
+        feature_info.pack(fill=tk.X, pady=5)
+        
+        self.features_var = tk.StringVar()
+        features_label = ttk.Label(feature_info, textvariable=self.features_var, wraplength=250)
+        features_label.pack(padx=5, pady=5)
+        
+        # Preprocessing params
+        preprocessing_info = ttk.LabelFrame(features_frame, text="Preprocessing Parameters")
+        preprocessing_info.pack(fill=tk.X, pady=5)
+        
+        self.preprocessing_text = tk.Text(preprocessing_info, height=8, wrap=tk.WORD)
+        self.preprocessing_text.pack(fill=tk.X, padx=5, pady=5)
+        
+        # Attention regions
+        attention_info = ttk.LabelFrame(features_frame, text="Attention Regions")
+        attention_info.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        self.attention_tree = ttk.Treeview(attention_info, columns=('Area', 'Saliency'), show='tree headings')
+        self.attention_tree.heading('#0', text='Region')
+        self.attention_tree.heading('Area', text='Area')
+        self.attention_tree.heading('Saliency', text='Avg Saliency')
+        
+        self.attention_tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+    
+    def setup_performance_tab(self):
+        """Setup performance info tab"""
+        perf_frame = ttk.Frame(self.ai_notebook)
+        self.ai_notebook.add(perf_frame, text="Performance")
+        
+        # File size comparison
+        size_info = ttk.LabelFrame(perf_frame, text="File Size Analysis")
+        size_info.pack(fill=tk.X, pady=5)
+        
+        self.size_text = tk.Text(size_info, height=6, wrap=tk.WORD)
+        self.size_text.pack(fill=tk.X, padx=5, pady=5)
+        
+        # Chunks information
+        chunks_info = ttk.LabelFrame(perf_frame, text="MEOW Chunks")
+        chunks_info.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        self.chunks_tree = ttk.Treeview(chunks_info, columns=('Size', 'Description'), show='tree headings')
+        self.chunks_tree.heading('#0', text='Chunk Type')
+        self.chunks_tree.heading('Size', text='Size (bytes)')
+        self.chunks_tree.heading('Description', text='Description')
+        
+        self.chunks_tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # AI benefits
+        benefits_info = ttk.LabelFrame(perf_frame, text="AI Benefits")
+        benefits_info.pack(fill=tk.X, pady=5)
+        
+        benefits_text = tk.Text(benefits_info, height=4, wrap=tk.WORD)
+        benefits_text.pack(fill=tk.X, padx=5, pady=5)
+        benefits_text.insert(tk.END, "• Pre-computed features reduce processing time\n")
+        benefits_text.insert(tk.END, "• Multi-resolution pyramid supports various models\n")
+        benefits_text.insert(tk.END, "• Embedded attention guides model focus\n")
+        benefits_text.insert(tk.END, "• Cross-compatible with standard viewers")
+        benefits_text.config(state=tk.DISABLED)
+    
+    def open_image(self):
+        """Open standard image file"""
         file_path = filedialog.askopenfilename(
-            title="Select PNG file",
-            filetypes=[("PNG files", "*.png"), ("All files", "*.*")]
+            title="Open Other Image",
+            filetypes=[
+                ("Image files", "*.png *.jpg *.jpeg *.gif *.bmp"),
+                ("All files", "*.*")
+            ]
         )
+        
         if file_path:
-            self.png_input_var.set(file_path)
-            # Auto-suggest output filename
-            output_path = str(Path(file_path).with_suffix('.meow'))
-            self.png_output_var.set(output_path)
+            try:
+                self.current_image = Image.open(file_path)
+                self.display_image(self.current_image)
+                self.current_meow = None
+                self.ai_metadata = None
+                self.update_ai_display()
+                self.update_status(f"Loaded: {os.path.basename(file_path)}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to open image: {e}")
     
-    def browse_png_output(self):
-        file_path = filedialog.asksaveasfilename(
-            title="Save MEOW file as",
+    def open_meow(self):
+        """Open MEOW file"""
+        file_path = filedialog.askopenfilename(
+            title="Open MEOW File",
+            filetypes=[
+                ("MEOW files", "*.meow"),
+                ("All files", "*.*")
+            ]
+        )
+        
+        if file_path:
+            try:
+                # Use smart fallback loader
+                self.current_image = smart_fallback_loader(file_path, self.viewer_capabilities)
+                
+                # Load enhanced MEOW data
+                self.current_meow = EnhancedMeowFormat()
+                self.current_image = self.current_meow.load_meow_file(file_path, load_ai_data=True)
+                self.ai_metadata = self.current_meow.get_ai_metadata()
+                
+                self.display_image(self.current_image)
+                self.update_ai_display()
+                self.update_status(f"Loaded MEOW: {os.path.basename(file_path)}")
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to open MEOW file: {e}")
+    
+    def convert_to_meow(self):
+        """Convert current image to Enhanced MEOW"""
+        if not self.current_image:
+            messagebox.showwarning("Warning", "No image loaded")
+            return
+        
+        output_path = filedialog.asksaveasfilename(
+            title="Save Enhanced MEOW File",
             defaultextension=".meow",
             filetypes=[("MEOW files", "*.meow"), ("All files", "*.*")]
         )
-        if file_path:
-            self.png_output_var.set(file_path)
-    
-    def browse_meow_input(self):
-        file_path = filedialog.askopenfilename(
-            title="Select MEOW file",
-            filetypes=[("MEOW files", "*.meow"), ("All files", "*.*")]
-        )
-        if file_path:
-            self.meow_input_var.set(file_path)
-            # Auto-suggest output filename
-            output_path = str(Path(file_path).with_suffix('.png'))
-            self.meow_output_var.set(output_path)
-    
-    def browse_meow_output(self):
-        file_path = filedialog.asksaveasfilename(
-            title="Save PNG file as",
-            defaultextension=".png",
-            filetypes=[("PNG files", "*.png"), ("All files", "*.*")]
-        )
-        if file_path:
-            self.meow_output_var.set(file_path)
-    
-    def do_png_to_meow(self):
-        input_file = self.png_input_var.get().strip()
-        output_file = self.png_output_var.get().strip()
         
-        if not input_file:
-            messagebox.showerror("Error", "Please select an input PNG file")
-            return
+        if output_path:
+            try:
+                # Create enhanced MEOW with sample AI annotations
+                meow = EnhancedMeowFormat()
+                
+                # Generate sample annotations based on image
+                ai_annotations = self.generate_sample_annotations()
+                
+                # Save temporary PNG for conversion
+                temp_png = "temp_convert.png"
+                self.current_image.save(temp_png, "PNG")
+                
+                success = meow.create_from_image(temp_png, output_path, 
+                                               include_fallback=True,
+                                               ai_annotations=ai_annotations)
+                
+                # Clean up temp file
+                if os.path.exists(temp_png):
+                    os.remove(temp_png)
+                
+                if success:
+                    messagebox.showinfo("Success", f"Enhanced MEOW saved: {output_path}")
+                    
+                    # Reload to show AI features
+                    self.current_meow = meow
+                    self.ai_metadata = meow.get_ai_metadata()
+                    self.update_ai_display()
+                else:
+                    messagebox.showerror("Error", "Failed to create Enhanced MEOW file")
+                    
+            except Exception as e:
+                messagebox.showerror("Error", f"Conversion failed: {e}")
+    
+    def generate_sample_annotations(self):
+        """Generate sample AI annotations for demonstration"""
+        if not self.current_image:
+            return {}
         
-        if not output_file:
-            messagebox.showerror("Error", "Please specify an output MEOW file")
-            return
+        width, height = self.current_image.size
         
-        try:
-            self.log_status(f"Converting {input_file} to MEOW format...")
+        return {
+            'object_classes': ['background', 'foreground'],
+            'bounding_boxes': [
+                {
+                    'class': 'region_of_interest',
+                    'bbox': [width//4, height//4, 3*width//4, 3*height//4],
+                    'confidence': 0.85
+                }
+            ],
+            'preprocessing_params': {
+                'mean_rgb': [0.485, 0.456, 0.406],
+                'std_rgb': [0.229, 0.224, 0.225],
+                'input_size': [224, 224],
+                'normalization': 'imagenet'
+            }
+        }
+    
+    def display_image(self, image):
+        """Display image on canvas"""
+        if image:
+            # Resize image if too large
+            canvas_width = self.image_canvas.winfo_width()
+            canvas_height = self.image_canvas.winfo_height()
             
-            success = self.meow.png_to_meow(input_file, output_file)
+            if canvas_width > 1 and canvas_height > 1:  # Canvas is initialized
+                img_width, img_height = image.size
+                
+                # Calculate scale to fit canvas
+                scale_x = canvas_width / img_width
+                scale_y = canvas_height / img_height
+                scale = min(scale_x, scale_y, 1.0)  # Don't scale up
+                
+                if scale < 1.0:
+                    new_size = (int(img_width * scale), int(img_height * scale))
+                    display_image = image.resize(new_size, Image.Resampling.LANCZOS)
+                else:
+                    display_image = image
+            else:
+                display_image = image
             
-            if success:
-                input_size = os.path.getsize(input_file)
-                output_size = os.path.getsize(output_file)
-                ratio = output_size / input_size if input_size > 0 else 0
-                
-                self.log_status("Conversion successful!")
-                self.log_status(f"Original PNG: {input_size:,} bytes")
-                self.log_status(f"MEOW file: {output_size:,} bytes")
-                self.log_status(f"Size ratio: {ratio:.2f}x")
-                self.log_status("-" * 40)
-                
-                messagebox.showinfo("Success", f"Successfully converted to {output_file}")
-            else:
-                self.log_status("Conversion failed!")
-                messagebox.showerror("Error", "Conversion failed")
-                
-        except Exception as e:
-            self.log_status(f"Error: {str(e)}")
-            messagebox.showerror("Error", f"Conversion failed: {str(e)}")
-    
-    def do_meow_to_png(self):
-        input_file = self.meow_input_var.get().strip()
-        output_file = self.meow_output_var.get().strip()
-        
-        if not input_file:
-            messagebox.showerror("Error", "Please select an input MEOW file")
-            return
-        
-        if not output_file:
-            messagebox.showerror("Error", "Please specify an output PNG file")
-            return
-        
-        try:
-            self.log_status(f"Converting {input_file} to PNG format...")
+            # Convert to PhotoImage
+            self.photo = ImageTk.PhotoImage(display_image)
             
-            img = self.meow.meow_to_image(input_file)
-            if img:
-                img.save(output_file, 'PNG')
-                
-                input_size = os.path.getsize(input_file)
-                output_size = os.path.getsize(output_file)
-                
-                self.log_status("Conversion successful!")
-                self.log_status(f"MEOW file: {input_size:,} bytes")
-                self.log_status(f"PNG file: {output_size:,} bytes")
-                self.log_status("-" * 40)
-                
-                messagebox.showinfo("Success", f"Successfully converted to {output_file}")
-            else:
-                self.log_status("Conversion failed!")
-                messagebox.showerror("Error", "Failed to load MEOW file")
-                
-        except Exception as e:
-            self.log_status(f"Error: {str(e)}")
-            messagebox.showerror("Error", f"Conversion failed: {str(e)}")
+            # Clear canvas and display image
+            self.image_canvas.delete("all")
+            self.image_canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
+            
+            # Update scroll region
+            self.image_canvas.configure(scrollregion=self.image_canvas.bbox("all"))
     
-    def log_status(self, message):
-        """Add a message to the status log"""
-        self.status_text.config(state=tk.NORMAL)
-        self.status_text.insert(tk.END, message + "\n")
-        self.status_text.see(tk.END)
-        self.status_text.config(state=tk.DISABLED)
-        self.root.update_idletasks()
-    
-    # Viewer methods
-    def open_meow_file(self):
-        file_path = filedialog.askopenfilename(
-            title="Open MEOW file",
-            filetypes=[("MEOW files", "*.meow"), ("All files", "*.*")]
-        )
-        if file_path:
-            self.load_image_in_viewer(file_path)
-    
-    def load_image_in_viewer(self, file_path):
-        try:
-            self.current_image = self.meow.meow_to_image(file_path)
-            if self.current_image:
-                self.zoom_level = 1.0
-                self.display_image_in_viewer()
-                # Switch to viewer tab
-                self.notebook.select(1)
-            else:
-                messagebox.showerror("Error", "Failed to load MEOW file")
-        except Exception as e:
-            messagebox.showerror("Error", f"Error loading image: {str(e)}")
-    
-    def display_image_in_viewer(self):
-        if self.current_image is None:
+    def update_ai_display(self):
+        """Update AI features display"""
+        # Clear all displays
+        self.metadata_text.delete(1.0, tk.END)
+        self.objects_tree.delete(*self.objects_tree.get_children())
+        self.attention_tree.delete(*self.attention_tree.get_children())
+        self.preprocessing_text.delete(1.0, tk.END)
+        self.chunks_tree.delete(*self.chunks_tree.get_children())
+        self.size_text.delete(1.0, tk.END)
+        
+        if not self.current_meow or not self.ai_metadata:
+            self.metadata_text.insert(tk.END, "No AI metadata available.\nLoad an Enhanced MEOW file to see AI features.")
+            self.features_var.set("No features available")
             return
         
-        # Calculate display size
-        display_width = int(self.current_image.width * self.zoom_level)
-        display_height = int(self.current_image.height * self.zoom_level)
+        # Update metadata
+        metadata_info = f"AI Metadata Overview\n{'='*20}\n"
+        if self.ai_metadata.object_classes:
+            metadata_info += f"Object Classes: {', '.join(self.ai_metadata.object_classes)}\n"
+        if self.ai_metadata.preprocessing_params:
+            metadata_info += f"Preprocessing: Available\n"
+        if hasattr(self.current_meow, 'chunks'):
+            metadata_info += f"Total Chunks: {len(self.current_meow.chunks)}\n"
         
-        # Resize image
-        if self.zoom_level != 1.0:
-            resized_image = self.current_image.resize((display_width, display_height), Image.NEAREST)
+        self.metadata_text.insert(tk.END, metadata_info)
+        
+        # Update objects
+        if self.ai_metadata.bounding_boxes:
+            for i, bbox_info in enumerate(self.ai_metadata.bounding_boxes):
+                obj_class = bbox_info.get('class', 'Unknown')
+                confidence = bbox_info.get('confidence', 0.0)
+                bbox = bbox_info.get('bbox', [])
+                bbox_str = f"[{', '.join(map(str, bbox))}]" if bbox else "N/A"
+                
+                self.objects_tree.insert('', tk.END, text=str(i+1),
+                                       values=(obj_class, f"{confidence:.2f}", bbox_str))
+        
+        # Update features
+        features_list = []
+        if hasattr(self.current_meow, 'chunks'):
+            for chunk_type in self.current_meow.chunks.keys():
+                chunk_name = chunk_type.decode('utf-8', errors='ignore')
+                if chunk_name in ['FEAT', 'ATTN', 'MRES', 'SEMT']:
+                    features_list.append(chunk_name)
+        
+        self.features_var.set(f"Available: {', '.join(features_list) if features_list else 'None'}")
+        
+        # Update preprocessing parameters
+        if self.ai_metadata.preprocessing_params:
+            preprocessing_info = json.dumps(self.ai_metadata.preprocessing_params, indent=2)
+            self.preprocessing_text.insert(tk.END, preprocessing_info)
+        
+        # Update chunks information
+        if hasattr(self.current_meow, 'chunks'):
+            chunk_descriptions = {
+                'MHDR': 'Image header information',
+                'FALL': 'Fallback PNG for compatibility',
+                'MPIX': 'Enhanced pixel data with neural compression',
+                'META': 'General metadata',
+                'AIMT': 'AI-specific metadata and annotations',
+                'FEAT': 'Pre-computed feature maps',
+                'ATTN': 'Attention maps and saliency',
+                'MRES': 'Multi-resolution pyramid',
+                'SEMT': 'Semantic segmentation layers',
+                'COMP': 'Neural compression data'
+            }
+            
+            for chunk_type, chunk_data in self.current_meow.chunks.items():
+                chunk_name = chunk_type.decode('utf-8', errors='ignore')
+                size = len(chunk_data)
+                description = chunk_descriptions.get(chunk_name, 'Unknown chunk type')
+                
+                self.chunks_tree.insert('', tk.END, text=chunk_name,
+                                      values=(f"{size:,}", description))
+        
+        # Update size analysis
+        if hasattr(self.current_meow, 'chunks'):
+            total_size = sum(len(data) for data in self.current_meow.chunks.values())
+            fallback_size = len(self.current_meow.chunks.get(b'FALL', b''))
+            ai_size = total_size - fallback_size
+            
+            size_info = f"Total MEOW Size: {total_size:,} bytes\n"
+            size_info += f"Fallback Image: {fallback_size:,} bytes ({fallback_size/total_size*100:.1f}%)\n"
+            size_info += f"AI Enhancements: {ai_size:,} bytes ({ai_size/total_size*100:.1f}%)\n"
+            size_info += f"Overhead Ratio: {ai_size/fallback_size:.2f}x\n"
+            
+            self.size_text.insert(tk.END, size_info)
+    
+    def on_object_select(self, event):
+        """Handle object selection in treeview"""
+        selection = self.objects_tree.selection()
+        if selection:
+            # In a full implementation, this could highlight the bounding box on the image
+            pass
+    
+    def toggle_ai_panel(self):
+        """Toggle AI panel visibility"""
+        if self.ai_frame.winfo_viewable():
+            self.ai_frame.pack_forget()
         else:
-            resized_image = self.current_image
+            self.ai_frame.pack(side=tk.RIGHT, fill=tk.Y, padx=5, pady=5)
+    
+    def show_capabilities(self):
+        """Show viewer capabilities dialog"""
+        cap_window = tk.Toplevel(self.root)
+        cap_window.title("Viewer Capabilities")
+        cap_window.geometry("400x300")
         
-        # Convert to PhotoImage
-        self.photo_image = ImageTk.PhotoImage(resized_image)
+        cap_text = tk.Text(cap_window, wrap=tk.WORD)
+        cap_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
-        # Display on canvas
-        self.viewer_canvas.delete("all")
-        self.viewer_canvas.create_image(0, 0, anchor=tk.NW, image=self.photo_image)
-        self.viewer_canvas.configure(scrollregion=self.viewer_canvas.bbox("all"))
+        cap_info = "Enhanced MEOW Viewer Capabilities\n"
+        cap_info += "="*40 + "\n\n"
         
-        # Update zoom label
-        self.zoom_label.config(text=f"{int(self.zoom_level * 100)}%")
+        for capability, supported in self.viewer_capabilities.items():
+            status = "✓ Supported" if supported else "✗ Not Supported"
+            cap_info += f"{capability}: {status}\n"
+        
+        cap_info += "\nFeatures:\n"
+        cap_info += "• Cross-compatible fallback loading\n"
+        cap_info += "• AI metadata visualization\n"
+        cap_info += "• Object detection display\n"
+        cap_info += "• Feature map information\n"
+        cap_info += "• Performance analysis\n"
+        cap_info += "• Chunk-based architecture\n"
+        
+        cap_text.insert(tk.END, cap_info)
+        cap_text.config(state=tk.DISABLED)
     
-    def show_viewer_placeholder(self):
-        self.viewer_canvas.delete("all")
-        self.viewer_canvas.create_text(
-            400, 300, text="No image loaded\nClick 'Open MEOW File' to load an image",
-            font=("Arial", 16), fill="gray", justify=tk.CENTER
-        )
-    
-    def zoom_in(self):
-        if self.current_image:
-            self.zoom_level = min(self.zoom_level * 1.25, 10.0)
-            self.display_image_in_viewer()
-    
-    def zoom_out(self):
-        if self.current_image:
-            self.zoom_level = max(self.zoom_level * 0.8, 0.1)
-            self.display_image_in_viewer()
-    
-    def reset_zoom(self):
-        if self.current_image:
-            self.zoom_level = 1.0
-            self.display_image_in_viewer()
-    
-    # File info methods
-    def browse_info_file(self):
-        file_path = filedialog.askopenfilename(
-            title="Select MEOW file to analyze",
-            filetypes=[("MEOW files", "*.meow"), ("All files", "*.*")]
-        )
-        if file_path:
-            self.info_file_var.set(file_path)
-    
-    def analyze_file(self):
-        file_path = self.info_file_var.get().strip()
-        if not file_path:
-            messagebox.showerror("Error", "Please select a MEOW file to analyze")
+    def export_ai_features(self):
+        """Export AI features to JSON"""
+        if not self.ai_metadata:
+            messagebox.showwarning("Warning", "No AI metadata to export")
             return
         
-        try:
-            info = self.meow.get_file_info(file_path)
-            if info is None:
-                messagebox.showerror("Error", "Not a valid MEOW file")
-                return
-            
-            # Load metadata
-            img = self.meow.meow_to_image(file_path)
-            
-            info_text = f"File: {os.path.basename(file_path)}\n"
-            info_text += f"Full path: {file_path}\n\n"
-            info_text += f"Format: {info['format']}\n"
-            info_text += f"Dimensions: {info['width']} x {info['height']} pixels\n"
-            info_text += f"Total pixels: {info['pixels']:,}\n"
-            info_text += f"File size: {info['file_size']:,} bytes\n"
-            info_text += f"Pixel data: {info['pixel_data_size']:,} bytes\n"
-            info_text += f"Metadata: {info['metadata_size']:,} bytes\n\n"
-            
-            if self.meow.metadata:
-                info_text += "Metadata:\n"
-                info_text += "-" * 20 + "\n"
-                for key, value in self.meow.metadata.items():
-                    info_text += f"{key}: {value}\n"
-            else:
-                info_text += "No metadata found\n"
-            
-            self.info_text.config(state=tk.NORMAL)
-            self.info_text.delete(1.0, tk.END)
-            self.info_text.insert(1.0, info_text)
-            self.info_text.config(state=tk.DISABLED)
-            
-        except Exception as e:
-            messagebox.showerror("Error", f"Error analyzing file: {str(e)}")
-    
-    # Menu methods
-    def convert_png_to_meow(self):
-        self.notebook.select(0)  # Switch to converter tab
-    
-    def convert_meow_to_png(self):
-        self.notebook.select(0)  # Switch to converter tab
-    
-    def show_about(self):
-        about_text = """MEOW Image File Format
-
-A Python implementation of a simple image file format.
-
-Features:
-• Cross-platform compatibility
-• RGBA support with transparency
-• Metadata support
-• Binary storage for efficiency
-• Simple and readable format specification
-
-Created as an improved alternative to the BRUHIFF format.
-
-Version 1.0"""
+        file_path = filedialog.asksaveasfilename(
+            title="Export AI Features",
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+        )
         
-        messagebox.showinfo("About MEOW Format", about_text)
+        if file_path:
+            try:
+                ai_data = {
+                    'object_classes': self.ai_metadata.object_classes,
+                    'bounding_boxes': self.ai_metadata.bounding_boxes,
+                    'preprocessing_params': self.ai_metadata.preprocessing_params
+                }
+                
+                with open(file_path, 'w') as f:
+                    json.dump(ai_data, f, indent=2)
+                
+                messagebox.showinfo("Success", f"AI features exported to {file_path}")
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Export failed: {e}")
     
-    def run(self):
-        """Start the GUI application"""
-        self.root.mainloop()
+    def import_annotations(self):
+        """Import AI annotations from JSON"""
+        file_path = filedialog.askopenfilename(
+            title="Import AI Annotations",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+        )
+        
+        if file_path:
+            try:
+                with open(file_path, 'r') as f:
+                    annotations = json.load(f)
+                
+                messagebox.showinfo("Info", "AI annotation import not yet implemented in this demo")
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Import failed: {e}")
+    
+    def update_status(self, message="Ready"):
+        """Update status bar"""
+        if self.current_image:
+            width, height = self.current_image.size
+            mode = self.current_image.mode
+            ai_status = " | AI Enhanced" if self.current_meow else " | Standard Format"
+            self.status_var.set(f"{message} | {width}x{height} {mode}{ai_status}")
+        else:
+            self.status_var.set(message)
 
 
 def main():
-    """Main entry point"""
-    app = MeowGUI()
-    app.run()
+    """Main application entry point"""
+    root = tk.Tk()
+    
+    # Set application icon (if available)
+    try:
+        if os.path.exists("assets/logos/logo.png"):
+            icon_img = tk.PhotoImage(file="assets/logos/logo.png")
+            root.iconphoto(True, icon_img)
+    except:
+        pass
+    
+    app = EnhancedMeowGUI(root)
+    
+    # Handle window closing
+    def on_closing():
+        root.quit()
+        root.destroy()
+    
+    root.protocol("WM_DELETE_WINDOW", on_closing)
+    
+    # Start the application
+    root.mainloop()
 
 
 if __name__ == "__main__":

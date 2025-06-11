@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-    <img src="https://img.shields.io/badge/Version-1.0-black?color=black&labelColor=black" alt="Version 1.0">
+    <img src="https://img.shields.io/badge/Version-1.1-black?color=black&labelColor=black" alt="Version 1.1">
     <img src="https://img.shields.io/badge/License-Apache 2.0-black?color=black&labelColor=black" alt="License Apache 2.0">
     <img src="https://img.shields.io/badge/Platform-Cross--platform-black?color=black&labelColor=black" alt="Platform Cross-platform">
 </p>

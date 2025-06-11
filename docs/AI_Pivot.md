@@ -61,4 +61,3 @@ Streaming support for large images
 Optional encryption for sensitive metadata
 
 The key insight is that AI models need different information than human viewers - your format can optimize for machine perception while maintaining human compatibility through the embedded fallback approach.
-Would you like me to elaborate on any of these aspects or help you design the specific technical specifications?
