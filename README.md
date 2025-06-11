@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-     The most Purr-fect image file format there exists
+     The most Purr-fect image file format there exists for AI-Based Tasks
 </p>
 
 ---
@@ -57,7 +57,7 @@ Whether you're a developer looking for a lightweight image format, a digital art
 
 People don't make new file formats simply because of one problem- they're very hard to bring to mass adoption, what if we fix that?
 
-## Revolutionary Cross-Compatibility
+## Cross-Compatibility With PNGs
 
  MEOW uses A steganographic image format that achieves TRUE universal compatibility while embedding rich AI metadata. It's basically PNGs on Steroids.
 
@@ -344,18 +344,35 @@ start photo.png                    # Opens perfectly
 python meow_gui.py                 # Load either .meow or .png - AI data intact!
 ```
 
-### 🚀 Quick Launch (Windows)
-After running `windows\associate_meow.bat`, MEOW files work like regular images:
+## 🕴️ Next Steps
 
+### File Association Setup
+
+To make `.meow` files open directly in your system's default image viewer, run the appropriate setup script for your platform:
+
+#### Windows
 ```powershell
-# Direct file operations
-double-click test.meow            # Opens in default image viewer
-right-click → "Open with..."     # Choose any image application
-
-# File associations work perfectly
-explorer.exe test.meow           # Shows thumbnail preview
-copy test.meow shared_folder\     # Recipients can open normally
+# Run as administrator to set up file associations
+windows\associate_meow.bat
 ```
+
+#### macOS  
+```bash
+# Make executable and run
+chmod +x macos/associate_meow_macos.sh
+./macos/associate_meow_macos.sh
+```
+
+#### Linux/Cross-Platform
+```bash
+# Universal setup script that detects your OS
+chmod +x scripts/associate_meow_crossplatform.sh
+./scripts/associate_meow_crossplatform.sh
+```
+
+After running the appropriate script, double-clicking any `.meow` file will open it in your system's default image viewer (Paint, Preview, etc.) while preserving the hidden AI metadata for MEOW-aware applications.
+
+**Note**: File association is optional - `.meow` files work in any image viewer even without these scripts.
 
 ## 🧪 Steganographic Format Specification
 
