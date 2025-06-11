@@ -65,7 +65,7 @@ MEOW uses a steganographic image format that embeds rich AI metadata while maint
 <tr>
 <td width="60%">
 
-### The Game Changer
+### How it's less of a headache
 Unlike traditional formats that require special viewers, **MEOW files contain standard PNG data**:
 
 - ✅ **Works in ANY image viewer** after simple setup (2 options below)
@@ -125,7 +125,7 @@ MEOW is specifically designed for the AI era, embedding metadata that accelerate
 </tr>
 </table>
 
-#### Why This Revolutionizes AI Image Processing
+#### Why This R̶e̶v̶o̶l̶u̶t̶i̶o̶n̶i̶z̶e̶s̶ Kinda Eases AI Image Processing
 
 **Traditional Workflow Problems:**
 - Separate metadata files easily lost or corrupted
@@ -142,7 +142,7 @@ MEOW is specifically designed for the AI era, embedding metadata that accelerate
 
 ## How Steganographic Storage Works
 
-MEOW uses advanced **LSB (Least Significant Bit) steganography** to hide AI data inside standard PNG images:
+MEOW uses **LSB (Least Significant Bit) steganography** to hide AI data inside standard PNG images:
 
 <table>
 <tr>
@@ -279,10 +279,10 @@ PNG Header + Image Data
 **The Result**: Best of both worlds - works everywhere + AI superpowers
 
 > **⚠️ Important**: While MEOW files contain standard PNG data, you need either:
-> 1. **Rename `.meow` → `.png`** (instant compatibility), OR  
+> 1. **Rename `.meow` → `.png`** (compatibility for viewing), OR  
 > 2. **Run file association scripts** (one-time setup to make `.meow` extension recognized)
 > 
-> Without setup, most viewers won't recognize the `.meow` extension by default.
+> Without setup, most viewers won't recognize the `.meow` extension by default. Because well, I just made it lol.
 
 ## 🛠️ How to Use
 
@@ -477,13 +477,6 @@ Binary:   10001100 01010100 11001000
 }
 ```
 
-#### 🎯 LLM Integration Benefits
-This structured metadata dramatically improves how Large Language Models understand images:
-- **Contextual awareness**: LLMs receive rich scene descriptions alongside visual data
-- **Object relationships**: Spatial and semantic relationships pre-analyzed
-- **Feature accessibility**: Visual features translated to language-friendly formats
-- **Multimodal enhancement**: Vision-language models can skip expensive feature extraction
-
 ## 🛠️ Tools & Applications
 
 <table>
@@ -513,25 +506,15 @@ This structured metadata dramatically improves how Large Language Models underst
 - **tkinter** for cross-platform GUI
 - **JSON** for structured AI data storage
 
-### Revolutionary Advantages
-- **PNG-compatible format** with setup options for viewing
-- **True cross-platform** support (Windows, macOS, Linux, mobile)
-- **AI-ready metadata** embedded invisibly
-- **Lossless data preservation** through file operations
-- **Minimal overhead** (typically 15-25% size increase)
-- **Steganographic security** (data invisible to casual inspection)
-- **Professional workflow integration** (works with Photoshop, GIMP after setup)
 
 ### Performance Characteristics
 | Metric | Standard PNG | Steganographic MEOW | Difference |
 |--------|-------------|-------------------|------------|
 | Viewer compatibility | 100% | 100% (after setup) | Simple setup required |
-| File size overhead | 0% | 15-25% | Minimal increase |
 | Visual quality | Perfect | Perfect | Imperceptible |
 | AI data capacity | 0 bytes | 650+ bytes | Rich metadata |
 | Load time | Fast | Fast | No noticeable difference |
-| LLM context understanding | Basic | Enhanced | Significantly improved |
-| Multimodal AI performance | Standard | Accelerated | 2-3x faster inference |
+| LLM context understanding | Basic | Better | Significantly improved |
 
 ### Real-World Applications
 - **AI Training Datasets**: Embedded annotations eliminate separate metadata files
@@ -542,28 +525,6 @@ This structured metadata dramatically improves how Large Language Models underst
 - **LLM Vision Tasks**: Enhanced multimodal AI with embedded context
 - **Automated Content Analysis**: Self-describing images for content pipelines
 - **AI Model Training**: Consistent, portable annotations across platforms
-
-## 📚 Documentation & Development
-
-### Documentation
-For complete documentation, see [USAGE.md](USAGE.md) in this repository.
-
-### Installation as a Package
-```powershell
-# Install directly from the repository
-pip install git+https://github.com/yourusername/MEOW-FILES.git
-
-# Or install in development mode from local clone
-git clone https://github.com/yourusername/MEOW-FILES.git
-cd MEOW-FILES
-pip install -e .
-```
-
-### Running Tests
-```powershell
-# Run the included test script
-python test_meow.py
-```
 
 ### Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -576,7 +537,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 🧠 Credits & Acknowledgements
 
-Initial concept inspired by [FaceDev](https://www.youtube.com/@FaceDevStuff), whose BRUHIFF format provided a creative starting point.
+Initial idea inspired by [FaceDev](https://www.youtube.com/@FaceDevStuff), whose BRUHIFF format provided a creative starting point.
 
 ## 📜 License
 
