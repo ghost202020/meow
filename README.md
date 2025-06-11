@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-     The most Purr-fect image file format there exists for AI-Based Tasks
+     The most Purr-fect Image File Format for your AI workflows
 </p>
 
 ---
@@ -549,6 +549,6 @@ This project is released under the Apache 2.0 License. See the LICENSE file for 
 
 <p align="center">Made with ❤️ by <a href="https://kuber.studio/">Kuber Mehta</a></p>
 
-<p align="center"><em>Purr-fectly optimized for your image needs</em></p>
+<p align="center"><em>Purr-fectly optimized (I mean- as far as my ugly code takes it)</em></p>
 
 </div>
