@@ -59,31 +59,34 @@ People don't make new file formats simply because of one problem- they're very h
 
 ## Cross-Compatibility With PNGs
 
- MEOW uses A steganographic image format that achieves TRUE universal compatibility while embedding rich AI metadata. It's basically PNGs on Steroids.
+MEOW uses a steganographic image format that embeds rich AI metadata while maintaining PNG compatibility. It's basically PNGs on Steroids.
 
 <table>
 <tr>
 <td width="60%">
 
 ### The Game Changer
-Unlike traditional formats that require special viewers, **MEOW files work everywhere**:
+Unlike traditional formats that require special viewers, **MEOW files contain standard PNG data**:
 
-- ✅ **Opens in ANY image viewer** (Paint, Photoshop, browsers, mobile apps)
-- ✅ **No file conversion needed** - works as-is with `.meow` extension
-- ✅ **Can be renamed to `.png`** and still functions perfectly
+- ✅ **Works in ANY image viewer** after simple setup (2 options below)
+- ✅ **Option 1: Rename to `.png`** - instant compatibility everywhere
+- ✅ **Option 2: File association setup** - makes `.meow` extension recognized  
 - ✅ **Hidden AI data** invisible to standard viewers, visible to AI
 - ✅ **Cross-platform compatibility** (Windows, macOS, Linux)
+
+**Setup Required**: Either rename `.meow` → `.png` OR run file association scripts
 
 </td>
 <td width="40%" align="center">
 
 ```
-📱 Standard Viewer
-   ↓ Opens .meow file
-🖼️ Sees: Beautiful PNG image
+📱 Standard Viewer (Setup Required)
+   ↓ Method 1: Rename test.meow → test.png
+   ↓ Method 2: Run file association script
+🖼️ Result: Opens as beautiful PNG image
 
 🤖 AI-Aware App  
-   ↓ Opens same .meow file
+   ↓ Opens .meow file directly (or renamed .png)
 🧠 Sees: Image + Rich AI metadata
 ```
 
@@ -191,12 +194,12 @@ PNG Header + Image Data
 <td width="50%">
 
 ### Universal Compatibility
-- **Works in ANY image viewer** (truly universal)
-- **No special software required** for viewing
+- **Contains standard PNG data** (universal format)
+- **Two ways to open**: Rename to `.png` OR file association setup
 - **Cross-platform support** (Windows, Linux, macOS)
-- **Web browser compatible** (displays as PNG)
-- **Mobile app support** (iOS Photos, Android Gallery)
-- **Professional software** (Photoshop, GIMP, etc.)
+- **Web browser compatible** (after rename to `.png`)
+- **Mobile app support** (rename `.meow` → `.png`)
+- **Professional software** (Photoshop, GIMP - rename to `.png`)
 
 </td>
 <td width="50%">
@@ -227,7 +230,7 @@ PNG Header + Image Data
 </tr>
 <tr>
 <td>Universal Viewer Support</td>
-<td>✅ Works everywhere</td>
+<td>✅ After setup (rename/association)</td>
 <td>✅</td>
 <td>❌ Requires special software</td>
 <td>❌ Requires MEOW viewer</td>
@@ -248,7 +251,7 @@ PNG Header + Image Data
 </tr>
 <tr>
 <td>Cross-Platform</td>
-<td>✅ True universality</td>
+<td>✅ Cross-platform (with setup)</td>
 <td>✅</td>
 <td>❌ Limited support</td>
 <td>✅</td>
@@ -274,6 +277,12 @@ PNG Header + Image Data
 **The Problem**: AI-enhanced formats typically sacrifice compatibility for features  
 **The Solution**: Hide AI data inside universally-compatible PNG files  
 **The Result**: Best of both worlds - works everywhere + AI superpowers
+
+> **⚠️ Important**: While MEOW files contain standard PNG data, you need either:
+> 1. **Rename `.meow` → `.png`** (instant compatibility), OR  
+> 2. **Run file association scripts** (one-time setup to make `.meow` extension recognized)
+> 
+> Without setup, most viewers won't recognize the `.meow` extension by default.
 
 ## 🛠️ How to Use
 
@@ -311,13 +320,15 @@ python meow_gui.py
 
 ### 👁️ Viewing & Testing Cross-Compatibility
 
-#### Standard Image Viewers (Works Everywhere!)
+#### Standard Image Viewers (2 Setup Options)
 ```powershell
-# These all work with .meow files:
-start test.meow                    # Opens in default viewer
-mspaint.exe test.meow             # Opens in Paint
-photoshop.exe test.meow           # Opens in Photoshop
-# Or just double-click the .meow file!
+# Option 1: Rename to .png (works instantly everywhere)
+rename test.meow test.png
+start test.png                    # Opens in default viewer
+
+# Option 2: Set up file associations (makes .meow recognized)
+windows\associate_meow.bat        # Run as administrator first
+start test.meow                   # Now opens directly!
 ```
 
 #### MEOW-Aware Applications (See AI Data)
@@ -335,13 +346,18 @@ python final_demonstration.py
 # 1. Create a steganographic MEOW file
 python meow_format.py "photo.jpg" "photo.meow"
 
-# 2. Test universal compatibility
-start photo.meow                   # Opens as image in default viewer
-rename photo.meow photo.png        # Still works as PNG!
-start photo.png                    # Opens perfectly
+# 2. Test universal compatibility - Choose your method:
 
-# 3. Extract AI data (MEOW-aware apps only)
-python meow_gui.py                 # Load either .meow or .png - AI data intact!
+# Method A: Rename to PNG (instant compatibility)
+copy photo.meow photo.png          # Keep original + create PNG copy
+start photo.png                    # Opens in any image viewer!
+
+# Method B: File association setup (one-time setup)
+windows\associate_meow.bat         # Run as admin (one-time setup)
+start photo.meow                   # Now .meow files open directly!
+
+# 3. Extract AI data (MEOW-aware apps see hidden metadata)
+python meow_gui.py                 # Load .meow OR renamed .png - AI data intact!
 ```
 
 ## 🕴️ Next Steps
@@ -372,7 +388,7 @@ chmod +x scripts/associate_meow_crossplatform.sh
 
 After running the appropriate script, double-clicking any `.meow` file will open it in your system's default image viewer (Paint, Preview, etc.) while preserving the hidden AI metadata for MEOW-aware applications.
 
-**Note**: File association is optional - `.meow` files work in any image viewer even without these scripts.
+**Note**: File association is optional - you can always rename `.meow` files to `.png` for instant compatibility with any image viewer.
 
 ## 🧪 Steganographic Format Specification
 
@@ -482,7 +498,7 @@ This structured metadata dramatically improves how Large Language Models underst
 </td>
 <td width="33%" align="center">
 <h3>🌐 Universal Compatibility</h3>
-<p>Works in ANY image viewer while preserving hidden AI enhancements</p>
+<p>PNG-compatible format that works in any viewer after simple setup</p>
 </td>
 </tr>
 </table>
@@ -498,18 +514,18 @@ This structured metadata dramatically improves how Large Language Models underst
 - **JSON** for structured AI data storage
 
 ### Revolutionary Advantages
-- **Universal compatibility** - works in every image viewer
+- **PNG-compatible format** with setup options for viewing
 - **True cross-platform** support (Windows, macOS, Linux, mobile)
 - **AI-ready metadata** embedded invisibly
 - **Lossless data preservation** through file operations
 - **Minimal overhead** (typically 15-25% size increase)
 - **Steganographic security** (data invisible to casual inspection)
-- **Professional workflow integration** (Photoshop, GIMP compatible)
+- **Professional workflow integration** (works with Photoshop, GIMP after setup)
 
 ### Performance Characteristics
 | Metric | Standard PNG | Steganographic MEOW | Difference |
 |--------|-------------|-------------------|------------|
-| Viewer compatibility | 100% | 100% | No change |
+| Viewer compatibility | 100% | 100% (after setup) | Simple setup required |
 | File size overhead | 0% | 15-25% | Minimal increase |
 | Visual quality | Perfect | Perfect | Imperceptible |
 | AI data capacity | 0 bytes | 650+ bytes | Rich metadata |
@@ -522,7 +538,7 @@ This structured metadata dramatically improves how Large Language Models underst
 - **Computer Vision**: Pre-computed features accelerate model inference
 - **Digital Asset Management**: Rich metadata without database dependency
 - **Research Archives**: Self-documenting images with analysis results
-- **Production Workflows**: Seamless integration with existing tools
+- **Production Workflows**: Integration with existing tools (after setup or rename to .png)
 - **LLM Vision Tasks**: Enhanced multimodal AI with embedded context
 - **Automated Content Analysis**: Self-describing images for content pipelines
 - **AI Model Training**: Consistent, portable annotations across platforms
