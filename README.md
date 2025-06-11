@@ -1,9 +1,13 @@
 <h1 align="center">MEOW</h1>
 
 <p align="center">
-    <img src="https://img.shields.io/badge/Version-1.0-white?color=white&labelColor=white" alt="Version 1.0">
-    <img src="https://img.shields.io/badge/License-Apache 2.0-white?color=white&labelColor=white" alt="License Apache 2.0">
-    <img src="https://img.shields.io/badge/Platform-Cross--platform-white?color=white&labelColor=white" alt="Platform Cross-platform">
+    <img src="assets/logos/logo.png" alt="MEOW Logo" width="200"/>
+</p>
+
+<p align="center">
+    <img src="https://img.shields.io/badge/Version-1.0-black?color=black&labelColor=black" alt="Version 1.0">
+    <img src="https://img.shields.io/badge/License-Apache 2.0-black?color=black&labelColor=black" alt="License Apache 2.0">
+    <img src="https://img.shields.io/badge/Platform-Cross--platform-black?color=black&labelColor=black" alt="Platform Cross-platform">
 </p>
 
 <p align="center">
@@ -29,7 +33,7 @@ Whether you're a developer looking for a lightweight image format, a digital art
 </td>
 <td width="30%" align="center">
 
-<img src="test.png" alt="Sample MEOW Image" width="200"/>
+<img src="assets/sample-images/test.png" alt="Sample MEOW Image" width="200"/>
 <br>
 <em>The First image to ever be converted to .meow</em>
 <br>
@@ -39,9 +43,11 @@ Whether you're a developer looking for a lightweight image format, a digital art
 </tr>
 </table>
 
-## 🧐 Why did you name it MEOW?
+## Why is it called MEOW?
 
-*[Insert screenshot of text convo here]*
+<p align="center">
+    <img src="assets/readme/meow-name.png" alt="MEOW naming conversation" width="600"/>
+</p>
 
 ---
 
@@ -316,7 +322,7 @@ This project is released under the MIT License. See the LICENSE file for details
     <img src="https://img.shields.io/badge/Works%20on-All%20Platforms-brightgreen" alt="Works on All Platforms">
 </p>
 
-<p align="center">Made with ❤️ and 🐱 energy</p>
+<p align="center">Made with ❤️ by <a href="https://kuber.studio/">Kuber Mehta</a></p>
 
 <p align="center"><em>Purr-fectly optimized for your image needs</em></p>
 
