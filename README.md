@@ -24,7 +24,7 @@
 
 Well- yes, but no, I'll come to that bit later, but before that, let me geek out about what this project is
 
-**MEOW** (Multilayer Encoded Optimized Webfile) is a Python-based image file format designed to be efficient, practical, and cross-platform compatible. 
+**MEOW** (Metadata Encoded Optimized Webfile) is a Python-based image file format designed to be efficient, practical, and cross-platform compatible. 
 
 With support for RGBA transparency, metadata, and fast rendering capabilities, MEOW provides a modern alternative for image storage and manipulation.
 
