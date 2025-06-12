@@ -96,25 +96,22 @@ Unlike traditional formats that require special viewers, **MEOW files contain st
 
 ### Perfect for AI Applications
 
-MEOW is specifically designed for the AI era, embedding metadata that accelerates machine learning workflows and enhances LLM image understanding:
+MEOW is specifically designed for use with AI, embedding metadata that accelerates machine learning workflows and enhances LLM image understanding:
 
 <table>
 <tr>
 <td width="50%">
 
-#### AI-Ready Features
-- **Object detection data** (classes, bounding boxes)
-- **Pre-computed features** (edge density, texture analysis)
-- **Attention maps** and saliency regions
-- **Model preprocessing parameters**
-- **Optimization hints** for neural networks
-- **LLM-friendly annotations** for multimodal AI
+#### Problems with Current Formats
+- **Metadata can very easily be stripped** - when images are processed or shared
+- **Limited to basic descriptive information** - not optimized for AI
+- **Separate from actual image processing** - requires additional steps
+- **Not designed for machine learning workflows**
 
 </td>
 <td width="50%">
 
 #### Performance Benefits
-- **Faster model inference** with pre-computed features
 - **Reduced preprocessing time** with embedded parameters
 - **Consistent input formats** across different models
 - **Training data enrichment** with embedded annotations
@@ -125,20 +122,25 @@ MEOW is specifically designed for the AI era, embedding metadata that accelerate
 </tr>
 </table>
 
-#### Why This R̶e̶v̶o̶l̶u̶t̶i̶o̶n̶i̶z̶e̶s̶ Kinda Eases AI Image Processing
+## MEOW's AI-Optimized Advantages
 
-**Traditional Workflow Problems:**
-- Separate metadata files easily lost or corrupted
-- Inconsistent preprocessing across different systems
-- Manual annotation effort repeated for each model
-- LLMs struggle with image context without rich metadata
+MEOW doesn't just store metadata - it embeds AI-specific intelligence that traditional formats can't handle. When any image is converted to a .meow, this data is automatically added in the conversion process:
 
-**MEOW Steganographic Solution:**
-- **Self-contained intelligence**: Every image carries its own AI analysis
-- **Preprocessing acceleration**: Models skip feature extraction steps
-- **Context-rich for LLMs**: Embedded descriptions help language models understand visual content
-- **Training dataset integrity**: Annotations never separate from images
-- **Cross-model compatibility**: Standardized metadata works with any AI framework
+1. **Pre-computed AI Features**
+  *   Optimal preprocessing parameters embedded in the file
+  *   Attention maps showing where AI models should focus
+  *   Bounding boxes and object detection data
+  *   Saliency regions for computer vision tasks
+
+2.  **Model Optimization Data**
+
+3.  **Steganographic Storage**
+
+  Unlike traditional metadata that's easily lost:
+
+  *   Encoded in pixel LSBs (Least Significant Bits)
+  *   Survives file operations that would strip normal metadata
+  *   Invisible to standard viewers but accessible to AI applications
 
 ## How Steganographic Storage Works
 
