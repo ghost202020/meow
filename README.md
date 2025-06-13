@@ -291,7 +291,7 @@ PNG Header + Image Data
 ### 📦 Setup
 ```powershell
 # Clone the repository
-git clone https://github.com/yourusername/MEOW-FILES.git
+git clone https://github.com/kuberwastaken/MEOW-FILES.git
 
 # Navigate to the directory
 cd MEOW-FILES
