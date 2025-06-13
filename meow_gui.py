@@ -15,7 +15,7 @@ from meow_format import MeowFormat, smart_fallback_loader
 class MeowGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Steganographic MEOW Viewer - True Cross-Compatibility")
+        self.root.title("Steganographic MEOW Viewer")
         self.root.geometry("1200x800")
         
         # Variables

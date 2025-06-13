@@ -28,7 +28,7 @@ Well- yes, but no, I'll come to that bit later, but before that, let me geek out
 
 With support for RGBA transparency, metadata, and fast rendering capabilities, MEOW provides a modern alternative for image storage and manipulation.
 
-Whether you're a developer looking for a lightweight image format, a digital artist needing transparent image support, or just a curious coder, MEOW offers a simple yet powerful solution.
+Whether you're a developer looking for a lightweight image format, an AI locked-in person to use the best possible file fomat, a digital artist needing transparent image support, or just a curious coder who wants a .meow file extension, MEOW offers a simple yet powerful solution.
 
 </td>
 <td width="30%" align="center">
